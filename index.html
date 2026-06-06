@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Food Decision Assistant — Ari Zone</title>
+  <style>
+    /* ─── RESET & BASE ─────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent:       #2563eb;
+      --accent-dark:  #1d4ed8;
+      --accent-light: #eff6ff;
+      --gold:         #f59e0b;
+      --gold-light:   #fffbeb;
+      --green:        #16a34a;
+      --green-light:  #f0fdf4;
+      --red:          #dc2626;
+      --red-light:    #fef2f2;
+      --purple:       #7c3aed;
+      --purple-light: #f5f3ff;
+      --surface:      #ffffff;
+      --bg:           #f8fafc;
+      --border:       #e2e8f0;
+      --text:         #1e293b;
+      --text-muted:   #64748b;
+      --text-light:   #94a3b8;
+      --radius:       12px;
+      --shadow-sm:    0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+      --shadow:       0 4px 12px rgba(0,0,0,.10);
+      --shadow-lg:    0 8px 30px rgba(0,0,0,.12);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                   'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      font-size: 15px;
+    }
+
+    /* ─── TYPOGRAPHY ───────────────────────────────────────────────────────── */
+    h1 { font-size: clamp(1.7rem, 4vw, 2.6rem); font-weight: 800; }
+    h2 { font-size: clamp(1.2rem, 3vw, 1.55rem); font-weight: 700; margin-bottom: .75rem; }
+    h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: .5rem; }
+    p  { margin-bottom: .75rem; }
+    p:last-child { margin-bottom: 0; }
+    a  { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ul { padding-left: 1.25rem; }
+    li { margin-bottom: .3rem; }
+
+    /* ─── LAYOUT ───────────────────────────────────────────────────────────── */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 1.25rem; }
+
+    section { padding: 3.5rem 0; }
+    section:nth-child(even) { background: var(--surface); }
+
+    .section-label {
+      display: inline-block;
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-light);
+      border-radius: 20px;
+      padding: .25rem .75rem;
+      margin-bottom: .6rem;
+    }
+
+    /* ─── HEADER ───────────────────────────────────────────────────────────── */
+    #hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #1d4ed8 100%);
+      color: #fff;
+      padding: 5rem 0 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    #hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-inner {
+      position: relative;
+      display: flex; flex-direction: column; gap: .6rem;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: .4rem;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 20px;
+      padding: .3rem .85rem;
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .06em;
+      color: #93c5fd;
+      width: fit-content;
+      margin-bottom: .4rem;
+    }
+    #hero h1 { line-height: 1.15; }
+    #hero h1 span { color: #60a5fa; }
+    .hero-sub {
+      font-size: 1.05rem;
+      color: #cbd5e1;
+      max-width: 580px;
+      margin-top: .25rem;
+    }
+    .hero-meta {
+      display: flex; flex-wrap: wrap; gap: .6rem;
+      margin-top: 1.4rem;
+    }
+    .hero-chip {
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 8px;
+      padding: .4rem .85rem;
+      font-size: .82rem;
+      color: #e2e8f0;
+    }
+    .hero-chip strong { color: #fff; }
+
+    /* ─── TOC NAV ──────────────────────────────────────────────────────────── */
+    .toc-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+      padding: .55rem 0;
+    }
+    .toc-inner {
+      display: flex; flex-wrap: wrap; gap: .35rem;
+      align-items: center;
+    }
+    .toc-link {
+      font-size: .75rem; font-weight: 600;
+      color: var(--text-muted);
+      padding: .3rem .65rem;
+      border-radius: 6px;
+      transition: background .15s, color .15s;
+      white-space: nowrap;
+    }
+    .toc-link:hover {
+      background: var(--accent-light);
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    /* ─── CARD ─────────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem 1.75rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* ─── OBJECTIVE ────────────────────────────────────────────────────────── */
+    .objective-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-top: 1.25rem;
+    }
+    .obj-item {
+      display: flex; align-items: flex-start; gap: .75rem;
+      background: var(--accent-light);
+      border: 1px solid #bfdbfe;
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+    }
+    .obj-icon {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+      margin-top: .1rem;
+    }
+    .obj-item h4 { font-size: .88rem; font-weight: 700; color: var(--accent-dark); }
+    .obj-item p  { font-size: .82rem; color: #3b5998; margin-top: .2rem; }
+
+    /* ─── PIPELINE ─────────────────────────────────────────────────────────── */
+    .pipeline {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: .4rem;
+      margin-top: 1.5rem;
+    }
+    .pipe-step {
+      display: flex; flex-direction: column; align-items: center;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: .85rem 1.1rem;
+      min-width: 115px;
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+      transition: border-color .2s, transform .2s;
+      flex: 1 1 115px;
+    }
+    .pipe-step:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .pipe-emoji { font-size: 1.6rem; }
+    .pipe-name  { font-size: .78rem; font-weight: 700; color: var(--text); margin-top: .35rem; }
+    .pipe-desc  { font-size: .68rem; color: var(--text-muted); margin-top: .15rem; }
+
+    .pipe-arrow {
+      font-size: 1.3rem;
+      color: var(--accent);
+      font-weight: 900;
+      flex-shrink: 0;
+      align-self: center;
+    }
+    @media (max-width: 640px) {
+      .pipeline { flex-direction: column; align-items: stretch; }
+      .pipe-arrow { transform: rotate(90deg); align-self: center; }
+      .pipe-step { min-width: unset; }
+    }
+
+    /* ─── TECH STACK ───────────────────────────────────────────────────────── */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: .85rem;
+      margin-top: 1.25rem;
+    }
+    .tech-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.1rem 1.25rem;
+      display: flex; align-items: center; gap: .75rem;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow .2s;
+    }
+    .tech-card:hover { box-shadow: var(--shadow); }
+    .tech-logo {
+      width: 42px; height: 42px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+    .tech-card h4 { font-size: .88rem; font-weight: 700; }
+    .tech-card p  { font-size: .75rem; color: var(--text-muted); margin-top: .1rem; }
+
+    /* ─── DATA SOURCES ─────────────────────────────────────────────────────── */
+    .source-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+      margin-top: 1.25rem;
+    }
+    .source-item {
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 1.1rem 1.25rem;
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+    }
+    .source-item h4 { font-size: .9rem; font-weight: 700; margin-bottom: .3rem; }
+    .source-item p  { font-size: .8rem; color: var(--text-muted); }
+    .source-badge {
+      display: inline-block;
+      font-size: .68rem; font-weight: 700;
+      padding: .2rem .55rem;
+      border-radius: 4px;
+      margin-bottom: .5rem;
+    }
+
+    /* ─── SCORING RUBRIC ───────────────────────────────────────────────────── */
+    .rubric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: .85rem;
+      margin-top: 1.25rem;
+    }
+    .rubric-item {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.2rem;
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+    }
+    .rubric-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: .5rem;
+    }
+    .rubric-name { font-size: .88rem; font-weight: 700; }
+    .rubric-pts {
+      font-size: .8rem; font-weight: 800;
+      padding: .2rem .6rem;
+      border-radius: 20px;
+    }
+    .rubric-bar-bg {
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 3px;
+      margin: .5rem 0;
+      overflow: hidden;
+    }
+    .rubric-bar-fill {
+      height: 100%; border-radius: 3px;
+      background: var(--accent);
+    }
+    .rubric-desc { font-size: .75rem; color: var(--text-muted); }
+
+    /* ─── TOP 10 TABLE ─────────────────────────────────────────────────────── */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      margin-top: 1.25rem;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+    thead {
+      background: linear-gradient(135deg, #0f172a, #1d4ed8);
+      color: #fff;
+    }
+    thead th {
+      padding: .85rem 1rem;
+      text-align: left;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background .15s; }
+    tbody tr:hover { background: var(--accent-light); }
+    tbody tr:last-child { border-bottom: none; }
+    td { padding: .75rem 1rem; vertical-align: middle; }
+
+    .rank-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      font-weight: 800; font-size: .82rem;
+    }
+    .rank-1 { background: #fef3c7; color: #92400e; border: 2px solid #f59e0b; }
+    .rank-2 { background: #f1f5f9; color: #475569; border: 2px solid #94a3b8; }
+    .rank-3 { background: #fef2f2; color: #9a3412; border: 2px solid #f97316; }
+    .rank-n { background: var(--bg); color: var(--text-muted); border: 2px solid var(--border); }
+
+    .score-pill {
+      display: inline-block;
+      font-weight: 800; font-size: .82rem;
+      padding: .2rem .65rem;
+      border-radius: 20px;
+    }
+    .score-high { background: #dcfce7; color: #15803d; }
+    .score-mid  { background: #fef9c3; color: #854d0e; }
+
+    .map-btn {
+      display: inline-flex; align-items: center; gap: .3rem;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 6px;
+      padding: .3rem .65rem;
+      font-size: .72rem; font-weight: 600;
+      white-space: nowrap;
+      transition: background .15s;
+    }
+    .map-btn:hover { background: var(--accent-dark); text-decoration: none; }
+
+    .cuisine-tag {
+      display: inline-block;
+      background: #f1f5f9; color: var(--text-muted);
+      border-radius: 4px; padding: .15rem .5rem;
+      font-size: .73rem;
+    }
+
+    /* ─── TOP 3 CARDS ──────────────────────────────────────────────────────── */
+    .rec-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    .rec-card {
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      background: var(--surface);
+      display: flex; flex-direction: column;
+      transition: box-shadow .2s, transform .2s;
+    }
+    .rec-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); }
+
+    .rec-header {
+      padding: 1.4rem 1.5rem 1rem;
+      position: relative;
+    }
+    .rec-medal {
+      position: absolute; top: 1rem; right: 1.1rem;
+      font-size: 1.8rem;
+    }
+    .rec-rank-label {
+      font-size: .68rem; font-weight: 800;
+      letter-spacing: .1em; text-transform: uppercase;
+      display: block; margin-bottom: .4rem;
+    }
+    .rec-name { font-size: 1.05rem; font-weight: 800; line-height: 1.25; margin-bottom: .5rem; }
+    .rec-meta {
+      display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .5rem;
+    }
+    .rec-chip {
+      font-size: .72rem; font-weight: 600;
+      padding: .2rem .55rem;
+      border-radius: 20px;
+      background: rgba(255,255,255,.6);
+      border: 1px solid rgba(0,0,0,.1);
+    }
+
+    .rec-body { padding: 0 1.5rem 1.5rem; flex: 1; }
+    .rec-section-title {
+      font-size: .72rem; font-weight: 800;
+      letter-spacing: .1em; text-transform: uppercase;
+      margin: 1rem 0 .5rem;
+    }
+    .rec-body p  { font-size: .82rem; line-height: 1.6; }
+    .rec-body li { font-size: .8rem; line-height: 1.55; }
+
+    .pro-section .rec-section-title { color: #15803d; }
+    .con-section .rec-section-title { color: #dc2626; }
+
+    .strength-list { list-style: none; padding: 0; }
+    .strength-list li::before { content: '✓  '; color: var(--green); font-weight: 700; }
+
+    .risk-list { list-style: none; padding: 0; }
+    .risk-item {
+      background: var(--red-light);
+      border: 1px solid #fecaca;
+      border-left: 3px solid var(--red);
+      border-radius: 6px;
+      padding: .55rem .75rem;
+      margin-bottom: .5rem;
+      font-size: .79rem;
+    }
+    .risk-item strong { color: var(--red); }
+
+    /* Card color themes */
+    .rec-gold   .rec-header { background: linear-gradient(135deg, #78350f, #d97706); color: #fff; }
+    .rec-silver .rec-header { background: linear-gradient(135deg, #1e293b, #475569); color: #fff; }
+    .rec-bronze .rec-header { background: linear-gradient(135deg, #1a3a2a, #16a34a); color: #fff; }
+
+    .score-badge-lg {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 52px; height: 52px; border-radius: 50%;
+      font-size: 1.15rem; font-weight: 900;
+      background: rgba(255,255,255,.2);
+      border: 2px solid rgba(255,255,255,.4);
+      color: #fff;
+      margin-top: .75rem;
+    }
+
+    /* ─── REFLECTION ───────────────────────────────────────────────────────── */
+    .ref-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+      margin-top: 1.25rem;
+    }
+    .ref-item {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.2rem 1.4rem;
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+    }
+    .ref-item h4 { margin-bottom: .5rem; display: flex; align-items: center; gap: .4rem; }
+
+    .link-grid {
+      display: flex; flex-wrap: wrap; gap: .6rem;
+      margin-top: 1.25rem;
+    }
+    .verify-link {
+      display: inline-flex; align-items: center; gap: .4rem;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: .55rem 1rem;
+      font-size: .82rem; font-weight: 600;
+      color: var(--text);
+      transition: border-color .15s, background .15s;
+    }
+    .verify-link:hover {
+      border-color: var(--accent);
+      background: var(--accent-light);
+      text-decoration: none;
+      color: var(--accent);
+    }
+
+    /* ─── FOOTER ───────────────────────────────────────────────────────────── */
+    footer {
+      background: #0f172a;
+      color: #94a3b8;
+      padding: 2.5rem 0;
+      text-align: center;
+      font-size: .8rem;
+    }
+    footer strong { color: #e2e8f0; }
+
+    /* ─── DIVIDER ──────────────────────────────────────────────────────────── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      margin: 0;
+    }
+
+    /* ─── MISC UTILITIES ───────────────────────────────────────────────────── */
+    .text-muted { color: var(--text-muted); font-size: .85rem; }
+    .mt-1 { margin-top: .5rem; }
+    .mt-2 { margin-top: 1rem; }
+    .emoji { font-style: normal; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+  §1  HEADER
+═══════════════════════════════════════════════════════════════════════════ -->
+<header id="hero">
+  <div class="container hero-inner">
+    <span class="hero-badge">🍽️&nbsp; Homework 03 · AI Food Assistant</span>
+    <h1>AI Food Decision<br><span>Assistant</span></h1>
+    <p class="hero-sub">Automated restaurant discovery pipeline for team dining — powered by Apify, n8n, Google Sheets, and Claude AI.</p>
+    <div class="hero-meta">
+      <div class="hero-chip">📍 <strong>Area:</strong> Ari Zone, Bangkok</div>
+      <div class="hero-chip">📅 <strong>Date:</strong> June 6, 2026</div>
+      <div class="hero-chip">👤 <strong>Participant:</strong> Yord (Pongpeera Chai)</div>
+      <div class="hero-chip">👥 <strong>Target Group:</strong> 8–12 People</div>
+      <div class="hero-chip">🏪 <strong>Venues Analysed:</strong> 29 Unique</div>
+    </div>
+  </div>
+</header>
+
+<!-- Sticky TOC -->
+<nav class="toc-bar">
+  <div class="container toc-inner">
+    <a class="toc-link" href="#objective">Objective</a>
+    <a class="toc-link" href="#workflow">Workflow</a>
+    <a class="toc-link" href="#techstack">Tech Stack</a>
+    <a class="toc-link" href="#sources">Data Sources</a>
+    <a class="toc-link" href="#rubric">Scoring Rubric</a>
+    <a class="toc-link" href="#top10">Top 10</a>
+    <a class="toc-link" href="#top3">Top 3 Picks</a>
+    <a class="toc-link" href="#reflection">Reflection</a>
+  </div>
+</nav>
+
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+  §2  PROJECT OBJECTIVE
+═══════════════════════════════════════════════════════════════════════════ -->
+<section id="objective">
+  <div class="container">
+    <span class="section-label">§ 2 — Objective</span>
+    <h2>Project Objective</h2>
+    <p>This project demonstrates how to build a <strong>fully automated, end-to-end restaurant intelligence workflow</strong> capable of replacing hours of manual research with a reproducible pipeline. The goal is to surface the best dining venues in the <strong>Ari Zone</strong> for a corporate team of 8–12 people — balancing quality, budget, logistics, and group dynamics — with zero manual scraping or subjective guesswork.</p>
+    <div class="objective-grid">
+      <div class="obj-item">
+        <span class="obj-icon">🤖</span>
+        <div>
+          <h4>Automate Discovery</h4>
+          <p>Use Apify scrapers to collect live restaurant data from Google Maps without manual effort.</p>
+        </div>
+      </div>
+      <div class="obj-item">
+        <span class="obj-icon">⚙️</span>
+        <div>
+          <h4>Orchestrate via n8n</h4>
+          <p>Webhook-triggered automation routes and transforms raw data into a structured spreadsheet.</p>
+        </div>
+      </div>
+      <div class="obj-item">
+        <span class="obj-icon">🧠</span>
+        <div>
+          <h4>AI-Powered Scoring</h4>
+          <p>Claude AI applies a 6-dimension, 100-point scoring rubric to rank every venue objectively.</p>
+        </div>
+      </div>
+      <div class="obj-item">
+        <span class="obj-icon">📊</span>
+        <div>
+          <h4>Decision-Ready Output</h4>
+          <p>Deliver ranked tables, trade-off analysis, and top-3 recommendations ready for team decision-making.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+  §3  AUTOMATED WORKFLOW
+═══════════════════════════════════════════════════════════════════════════ -->
+<section id="workflow">
+  <div class="container">
+    <span class="section-label">§ 3 — Automated Workflow</span>
+    <h2>Pipeline Overview</h2>
+    <p>The six-stage pipeline flows from raw scraping through orchestration and AI analysis to final HTML delivery. Each stage has a distinct responsibility and hands off clean, structured data to the next.</p>
+
+    <div class="pipeline">
+      <div class="pipe-step">
+        <span class="pipe-emoji">🕷️</span>
+        <span class="pipe-name">Apify Scraper</span>
+        <span class="pipe-desc">Crawls Google Maps for restaurants in Ari Zone. Returns structured JSON.</span>
+      </div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step">
+        <span class="pipe-emoji">🔔</span>
+        <span class="pipe-name">Webhook</span>
+        <span class="pipe-desc">Apify posts completed dataset payload to an n8n webhook endpoint.</span>
+      </div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step">
+        <span class="pipe-emoji">⚙️</span>
+        <span class="pipe-name">n8n Automation</span>
+        <span class="pipe-desc">Parses, deduplicates, and normalises fields. Routes data to Google Sheets.</span>
+      </div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step">
+        <span class="pipe-emoji">📋</span>
+        <span class="pipe-name">Google Sheets</span>
+        <span class="pipe-desc">Acts as the live data warehouse. Stores raw + cleaned records per run.</span>
+      </div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step">
+        <span class="pipe-emoji">🧠</span>
+        <span class="pipe-name">Claude AI Analytics</span>
+        <span class="pipe-desc">Applies 100-point scoring model. Generates rankings and trade-off analysis.</span>
+      </div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step">
+        <span class="pipe-emoji">🌐</span>
+        <span class="pipe-name">HTML Report</span>
+        <span class="pipe-desc">Final output hosted on GitHub Pages. This document.</span>
+      </div>
+    </div>
+
+    <div class="card mt-2" style="margin-top:1.5rem;">
+      <h3>Trigger Mechanism</h3>
+      <p class="text-muted" style="font-size:.84rem;">The pipeline is <strong>event-driven</strong>: Apify's "Run Finished" webhook fires a <code>POST</code> request to the n8n endpoint, passing the dataset ID. n8n retrieves the dataset via the Apify API, processes it, and appends rows to Google Sheets in real time — no manual intervention required after the initial setup.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+  §4  TECH STACK
+═══════════════════════════════════════════════════════════════════════════ -->
+<section id="techstack">
+  <div class="container">
+    <span class="section-label">§ 4 — Tech Stack</span>
+    <h2>Tools & Technologies Used</h2>
+    <p>Five tools form the complete pipeline — each chosen for its role in a no-code / low-code automation workflow accessible to non-engineers.</p>
+
+    <div class="tech-grid">
+      <div class="tech-card">
+        <div class="tech-logo" style="background:#f0fdf4; color:#16a34a;">🕷️</div>
+        <div>
+          <h4>Apify</h4>
+          <p>Google Maps scraper actor to collect restaurant listings, ratings, and metadata.</p>
+        </div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-logo" style="background:#fff7ed; color:#ea580c;">⚙️</div>
+        <div>
+          <h4>n8n</h4>
+          <p>Workflow automation platform. Handles webhook ingestion, data transformation, and routing.</p>
+        </div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-logo" style="background:#f0fdf4; color:#15803d;">📊</div>
+        <div>
+          <h4>Google Sheets</h4>
+          <p>Structured data warehouse. Stores raw scrape output and cleaned analysis results.</p>
+        </div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-logo" style="background:#eff6ff; color:#2563eb;">🧠</div>
+        <div>
+          <h4>Claude AI</h4>
+          <p>Anthropic's LLM for intelligent data cleaning, scoring, ranking, and trade-off analysis.</p>
+        </div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-logo" style="background:#f5f3ff; color:#7c3aed;">🌐</div>
+        <div>
+          <h4>GitHub Pages</h4>
+          <p>Static hosting for the final HTML report. Zero infrastructure, instantly shareable URL.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+  §5  DATA SOURCES
+═══════════════════════════════════════════════════════════════════════════ -->
+<section id="sources">
+  <div class="container">
+    <span class="section-label">§ 5 — Data Sources</span>
+    <h2>Data Sources &amp; Reference Links</h2>
+    <p>Two complementary Google Maps data collection methods were used, yielding 30 raw entries (29 unique after deduplication).</p>
+
+    <div class="source-list">
+      <div class="source-item">
+        <span class="source-badge" style="background:#eff6ff;color:#2563eb;">Source A</span>
+        <h4>Google Maps Places API (via Apify)</h4>
+        <p style="margin-bottom:.6rem;">15 entries collected using the Places API actor. Provides Place IDs, ratings, and full addresses but <strong>no price range data</strong>. Used as the baseline dataset for the Ari Zone search.</p>
+        <p style="font-size:.75rem; color:var(--text-muted);">Fields present: Name, Place ID, Rating, Address</p>
+        <p style="font-size:.75rem; color:var(--text-muted);">Fields missing: Price Range (inferred for all 15 entries)</p>
+        <a href="https://www.apify.com/apify/google-maps-scraper" target="_blank" rel="noopener" class="map-btn" style="margin-top:.75rem;display:inline-flex;">🔗 Apify Google Maps Actor</a>
+      </div>
+      <div class="source-item">
+        <span class="source-badge" style="background:#f0fdf4;color:#15803d;">Source B</span>
+        <h4>Google Maps Scraper (Apify, JS-rendered)</h4>
+        <p style="margin-bottom:.6rem;">15 entries collected using the full-page scraper. Provides complete URLs, <strong>price range data</strong>, ratings, and addresses. Richer dataset used to fill price gaps via deduplication merge.</p>
+        <p style="font-size:.75rem; color:var(--text-muted);">Fields present: Name, Full URL, Rating, Price Range, Address</p>
+        <p style="font-size:.75rem; color:var(--text-muted);">Duplicate found: Madcow Burger (merged with Source A entry)</p>
+        <a href="https://www.apify.com/apify/google-maps-scraper" target="_blank" rel="noopener" class="map-btn" style="margin-top:.75rem;display:inline-flex;">🔗 Apify Scraper Docs</a>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1rem; border-left: 4px solid var(--gold);">
+      <p style="font-size:.83rem;"><strong>⚡ Deduplication Note:</strong> <em>Madcow burger x Under Over Ari</em> appeared in both sources with identical Place ID <code>ChIJtbK7WrOd4jARTFq03G7s99k</code>. Records were merged, retaining the Scraper entry's richer price data. Final unique count: <strong>29 restaurants</strong>.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+  §6  SCORING RUBRIC
+═══════════════════════════════════════════════════════════════════════════ -->
+<section id="rubric">
+  <div class="container">
+    <span class="section-label">§ 6 — Scoring Model</span>
+    <h2>Scoring Rubric — 6 Weighted Dimensions (100 pts)</h2>
+    <p>Each restaurant is scored independently across six dimensions. <strong>Weight distribution is fixed</strong> per project specification and must not be altered.</p>
+
+    <div class="rubric-grid">
+      <div class="rubric-item">
+        <div class="rubric-header">
+          <span class="rubric-name">⭐ Review &amp; Rating Consistency</span>
+          <span class="rubric-pts" style="background:#eff6ff;color:#2563eb;">25 pts</span>
+        </div>
+        <div class="rubric-bar-bg"><div class="rubric-bar-fill" style="width:100%;background:#2563eb;"></div></div>
+        <p class="rubric-desc">Authenticity and alignment between rating score and implied review volume. A 5.0 rating with suspected low review count is penalised for lower credibility. Scores range from 11 (4.3★) to 23 (4.9★); 5.0★ scores 18 due to inflated-rating risk.</p>
+      </div>
+      <div class="rubric-item">
+        <div class="rubric-header">
+          <span class="rubric-name">👥 Group Suitability</span>
+          <span class="rubric-pts" style="background:#f0fdf4;color:#16a34a;">20 pts</span>
+        </div>
+        <div class="rubric-bar-bg"><div class="rubric-bar-fill" style="width:80%;background:#16a34a;"></div></div>
+        <p class="rubric-desc">Physical capacity and format appropriateness for 8–12 people. BBQ/hot-pot formats score highest (17–19). Intimate bistros, salad bars, or rooftop kiosks score lower due to seating constraints or awkward group ordering.</p>
+      </div>
+      <div class="rubric-item">
+        <div class="rubric-header">
+          <span class="rubric-name">💰 Price &amp; Value</span>
+          <span class="rubric-pts" style="background:#fffbeb;color:#92400e;">15 pts</span>
+        </div>
+        <div class="rubric-bar-bg"><div class="rubric-bar-fill" style="width:60%;background:#f59e0b;"></div></div>
+        <p class="rubric-desc">Cost-effectiveness relative to experience quality. ≤฿300/person = 13–15 pts; ฿300–600 = 9–12; ฿600–1,000 = 6–8; &gt;฿1,000 = 3–5. Inferred prices (missing from dataset) receive a 1–2 pt penalty for uncertainty.</p>
+      </div>
+      <div class="rubric-item">
+        <div class="rubric-header">
+          <span class="rubric-name">🚇 Travel &amp; Accessibility</span>
+          <span class="rubric-pts" style="background:#fffbeb;color:#92400e;">15 pts</span>
+        </div>
+        <div class="rubric-bar-bg"><div class="rubric-bar-fill" style="width:60%;background:#f59e0b;"></div></div>
+        <p class="rubric-desc">Proximity to BTS Ari station and ease of navigation. Main road (Phahonyothin Rd) = 13–14; accessible soi within 5 min walk = 11–12; deep or complex soi = 9–10; far from BTS (Rama VI) = 8–9.</p>
+      </div>
+      <div class="rubric-item">
+        <div class="rubric-header">
+          <span class="rubric-name">📋 Data Quality &amp; Completeness</span>
+          <span class="rubric-pts" style="background:#fffbeb;color:#92400e;">15 pts</span>
+        </div>
+        <div class="rubric-bar-bg"><div class="rubric-bar-fill" style="width:60%;background:#f59e0b;"></div></div>
+        <p class="rubric-desc">Richness of the dataset record. Scraper entries (full URL + price + address) = 13–14 pts. Places API entries (place ID only, no price range) = 7 pts. Penalises data gaps that require inference.</p>
+      </div>
+      <div class="rubric-item">
+        <div class="rubric-header">
+          <span class="rubric-name">✨ Uniqueness</span>
+          <span class="rubric-pts" style="background:#f5f3ff;color:#7c3aed;">10 pts</span>
+        </div>
+        <div class="rubric-bar-bg"><div class="rubric-bar-fill" style="width:40%;background:#7c3aed;"></div></div>
+        <p class="rubric-desc">Presence of a signature dish, theatrical experience, or distinct selling point. Live-fire teppanyaki, rooftop views, or niche cuisines score 8–10. Generic Thai or standard burgers score 4–6.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+  §7  TOP 10 TABLE
+═══════════════════════════════════════════════════════════════════════════ -->
+<section id="top10">
+  <div class="container">
+    <span class="section-label">§ 7 — Top 10 Ranking</span>
+    <h2>Top 10 Restaurants by Score</h2>
+    <p>Sorted descending by total score. Tiebreaker: Group Suitability score (higher wins). Source links verified against raw dataset Place IDs.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Restaurant Name</th>
+            <th>Cuisine</th>
+            <th>R&R</th>
+            <th>GS</th>
+            <th>PV</th>
+            <th>TR</th>
+            <th>DQ</th>
+            <th>UQ</th>
+            <th>Total</th>
+            <th>Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="rank-badge rank-1">1</span></td>
+            <td><strong>YUKGA Korean BBQ ARI</strong></td>
+            <td><span class="cuisine-tag">Korean BBQ</span></td>
+            <td>23</td><td>19</td><td>10</td><td>14</td><td>14</td><td>8</td>
+            <td><span class="score-pill score-high">88</span></td>
+            <td><a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=YUKGA+Korean+BBQ+ARI&query_place_id=ChIJP7qkwcCd4jARr9-27jTPj3o" target="_blank" rel="noopener">📍 Maps</a></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-2">2</span></td>
+            <td><strong>Loy High 9th Floor</strong></td>
+            <td><span class="cuisine-tag">Rooftop / International</span></td>
+            <td>23</td><td>17</td><td>11</td><td>14</td><td>14</td><td>9</td>
+            <td><span class="score-pill score-high">88</span></td>
+            <td><a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=Loy+High+9th+Floor&query_place_id=ChIJ92cfX2Kd4jARXULCOeLK1vM" target="_blank" rel="noopener">📍 Maps</a></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-3">3</span></td>
+            <td><strong>Do Nūa - La Villa Ari</strong></td>
+            <td><span class="cuisine-tag">Northern Thai / Beef</span></td>
+            <td>23</td><td>14</td><td>13</td><td>14</td><td>14</td><td>8</td>
+            <td><span class="score-pill score-high">86</span></td>
+            <td><a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=Do+Nua+La+Villa+Ari&query_place_id=ChIJzSGKcbqd4jARz2juHM1CBWU" target="_blank" rel="noopener">📍 Maps</a></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-n">4</span></td>
+            <td><strong>แซ่บสุดใจ / Sabsudjai Ari</strong></td>
+            <td><span class="cuisine-tag">Thai / Isaan</span></td>
+            <td>21</td><td>15</td><td>13</td><td>14</td><td>14</td><td>6</td>
+            <td><span class="score-pill score-high">83</span></td>
+            <td><a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=Sabsudjai+Ari&query_place_id=ChIJhfXpIFOd4jAR9JEXzMGBXqw" target="_blank" rel="noopener">📍 Maps</a></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-n">5</span></td>
+            <td><strong>Sonny Ari</strong></td>
+            <td><span class="cuisine-tag">Modern Thai</span></td>
+            <td>23</td><td>15</td><td>9</td><td>13</td><td>14</td><td>8</td>
+            <td><span class="score-pill score-high">82</span></td>
+            <td><a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=Sonny+Ari&query_place_id=ChIJ4bcTtMWf4jARo1RG_OMU9dU" target="_blank" rel="noopener">📍 Maps</a></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-n">6</span></td>
+            <td><strong>Hideout The Hub Phahol - Ari</strong></td>
+            <td><span class="cuisine-tag">Café / Bar</span></td>
+            <td>18</td><td>15</td><td>13</td><td>14</td><td>14</td><td>7</td>
+            <td><span class="score-pill score-mid">81</span></td>
+            <td><a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=Hideout+The+Hub+Phahol+Ari&query_place_id=ChIJG-iu40ud4jARkN9jO-GIKMo" target="_blank" rel="noopener">📍 Maps</a></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-n">7</span></td>
+            <td><strong>Barney's Burger Joint</strong></td>
+            <td><span class="cuisine-tag">American / Burgers</span></td>
+            <td>21</td><td>13</td><td>13</td><td>13</td><td>14</td><td>7</td>
+            <td><span class="score-pill score-mid">81</span></td>
+            <td><a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=Barney%27s+Burger+Joint&query_place_id=ChIJD7Gs1B2c4jART2PuI5seFus" target="_blank" rel="noopener">📍 Maps</a></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-n">8</span></td>
+            <td><strong>NER-แจ่วฮ้อน</strong></td>
+            <td><span class="cuisine-tag">Thai / Northern Hot Pot</span></td>
+            <td>23</td><td>17</td><td>10</td><td>12</td><td>7</td><td>8</td>
+            <td><span class="score-pill score-mid">77</span></td>
+            <td><a class="map-btn" href="https://www.google.com/maps/place/?q=place_id:ChIJ8QxeEUWd4jARE8KUG32u_Kc" target="_blank" rel="noopener">📍 Maps</a></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-n">9</span></td>
+            <td><strong>Shabu Moto Ari</strong></td>
+            <td><span class="cuisine-tag">Japanese / Shabu</span></td>
+            <td>21</td><td>16</td><td>8</td><td>10</td><td>14</td><td>8</td>
+            <td><span class="score-pill score-mid">77</span></td>
+            <td><a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=Shabu+Moto+Ari&query_place_id=ChIJ1VMEg-ud4jARYzO78p6Is5g" target="_blank" rel="noopener">📍 Maps</a></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-n">10</span></td>
+            <td><strong>Madcow burger × Under Over Ari</strong></td>
+            <td><span class="cuisine-tag">American / Burgers</span></td>
+            <td>21</td><td>12</td><td>13</td><td>11</td><td>13</td><td>7</td>
+            <td><span class="score-pill score-mid">77</span></td>
+            <td><a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=Madcow+burger+x+Under+Over+Ari&query_place_id=ChIJtbK7WrOd4jARTFq03G7s99k" target="_blank" rel="noopener">📍 Maps</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="text-muted mt-1" style="font-size:.75rem; margin-top:.75rem;">R&R = Review &amp; Rating (25) · GS = Group Suitability (20) · PV = Price &amp; Value (15) · TR = Travel (15) · DQ = Data Quality (15) · UQ = Uniqueness (10)</p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+  §8  TOP 3 RECOMMENDATIONS
+═══════════════════════════════════════════════════════════════════════════ -->
+<section id="top3">
+  <div class="container">
+    <span class="section-label">§ 8 — Top 3 Picks</span>
+    <h2>Top 3 Scenario Recommendations for 8–12 Pax</h2>
+    <p>Selected for teams of 8–12 people. Each card states full analytical justification <strong>and</strong> explicit trade-offs — objectivity over flattery.</p>
+
+    <div class="rec-grid">
+
+      <!-- ── CARD 1: YUKGA ─────────────────────────────────────── -->
+      <div class="rec-card rec-gold">
+        <div class="rec-header">
+          <span class="rec-medal">🥇</span>
+          <span class="rec-rank-label">1st Recommendation</span>
+          <div class="rec-name">YUKGA Korean BBQ ARI</div>
+          <div class="rec-meta">
+            <span class="rec-chip">⭐ 4.9</span>
+            <span class="rec-chip">💰 ฿200–1,000/pax</span>
+            <span class="rec-chip">🍖 Korean BBQ</span>
+            <span class="rec-chip">📍 The HUB, Phahon Rd</span>
+          </div>
+          <div class="score-badge-lg">88</div>
+        </div>
+        <div class="rec-body">
+          <div class="pro-section">
+            <p class="rec-section-title">✅ Why It's #1 for Groups</p>
+            <ul class="strength-list">
+              <li>Korean BBQ grill tables are <strong>architecturally designed for group dining</strong> — seating 4–6 per grill, 8–12 pax fills 2–3 tables naturally.</li>
+              <li>Highest Group Suitability score in the dataset: <strong>19/20</strong>.</li>
+              <li>Located inside The HUB on Phahonyothin Rd — <strong>BTS Ari walkable</strong>, major road, easy taxi/Grab drop-off.</li>
+              <li>4.9 rating from Scraper source suggests high review volume and consistent quality.</li>
+              <li>The <strong>interactive grilling format</strong> creates natural shared activity — ideal for team bonding.</li>
+            </ul>
+          </div>
+          <div class="con-section" style="margin-top:.75rem;">
+            <p class="rec-section-title">⚠️ Trade-offs &amp; Risks</p>
+            <div class="risk-list">
+              <div class="risk-item"><strong>Budget Unpredictability:</strong> ฿200–1,000/pax is a 5× range. Realistic full dinner with drinks = ฿600–900/pax. For 10 people = ฿6,000–9,000 with no ceiling if alcohol flows freely.</div>
+              <div class="risk-item"><strong>Smoke &amp; Ventilation:</strong> Charcoal/gas grill smoke fills the space. Not suitable for team members with asthma, respiratory sensitivity, or clothing care concerns.</div>
+              <div class="risk-item"><strong>Noise Level:</strong> Sizzling, exhaust fans, and lively crowd make structured conversation (planning, retrospectives) essentially impossible.</div>
+              <div class="risk-item"><strong>Reservation Required:</strong> Walk-in for 8–12 is nearly impossible. Book 3–5 days ahead; risk of being split across 3 non-adjacent tables.</div>
+              <div class="risk-item"><strong>Dietary Exclusion:</strong> Heavily meat-centric. Vegetarians, vegans, and non-beef/pork eaters have very limited options — highest dietary-exclusion risk of the three.</div>
+            </div>
+          </div>
+          <div style="margin-top:1rem;">
+            <a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=YUKGA+Korean+BBQ+ARI&query_place_id=ChIJP7qkwcCd4jARr9-27jTPj3o" target="_blank" rel="noopener" style="font-size:.8rem;padding:.45rem .9rem;">📍 View on Google Maps</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CARD 2: LOY HIGH ──────────────────────────────────── -->
+      <div class="rec-card rec-silver">
+        <div class="rec-header">
+          <span class="rec-medal">🥈</span>
+          <span class="rec-rank-label">2nd Recommendation</span>
+          <div class="rec-name">Loy High 9th Floor</div>
+          <div class="rec-meta">
+            <span class="rec-chip">⭐ 4.9</span>
+            <span class="rec-chip">💰 ฿200–600/pax</span>
+            <span class="rec-chip">🌆 Rooftop / International</span>
+            <span class="rec-chip">📍 The HUB, 9th Fl</span>
+          </div>
+          <div class="score-badge-lg">88</div>
+        </div>
+        <div class="rec-body">
+          <div class="pro-section">
+            <p class="rec-section-title">✅ Why It's #2 for Groups</p>
+            <ul class="strength-list">
+              <li>Only <strong>9th-floor rooftop restaurant</strong> in the dataset — unique atmospheric differentiator that generic venues cannot match.</li>
+              <li>Highest Uniqueness score in the Top 3: <strong>9/10</strong>.</li>
+              <li>฿200–600/pax is <strong>exceptional value for a rooftop venue</strong> by Bangkok standards (most charge 2–3× this).</li>
+              <li>Same building as The HUB → same access convenience as YUKGA (BTS Ari, main road).</li>
+              <li>Open layout flexible for groups — tables can often be combined for large parties.</li>
+            </ul>
+          </div>
+          <div class="con-section" style="margin-top:.75rem;">
+            <p class="rec-section-title">⚠️ Trade-offs &amp; Risks</p>
+            <div class="risk-list">
+              <div class="risk-item"><strong>Weather Dependency:</strong> A 9th-floor rooftop in Bangkok's rainy season (May–Oct) is exposed to sudden downpours. The defining feature (views, open air) becomes the biggest liability in bad weather.</div>
+              <div class="risk-item"><strong>Menu May Be Bar-First:</strong> Rooftop venues typically prioritise drinks and small plates. ฿600 ceiling suggests a bites-and-cocktails format — team may leave underfed without pre-checking the food menu.</div>
+              <div class="risk-item"><strong>Service Strain Under Group Load:</strong> Small rooftop service teams optimised for couples. A 10–12 person group can overwhelm ordering, billing, and food delivery cadence.</div>
+              <div class="risk-item"><strong>Wind &amp; Ambient Noise:</strong> At height, wind noise and Bangkok's urban soundscape reduce table conversation quality compared to an indoor venue.</div>
+              <div class="risk-item"><strong>Price Range Ambiguity:</strong> ฿200 likely means one drink; realistic per-head food+drink spend remains unclear until you review the full menu.</div>
+            </div>
+          </div>
+          <div style="margin-top:1rem;">
+            <a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=Loy+High+9th+Floor&query_place_id=ChIJ92cfX2Kd4jARXULCOeLK1vM" target="_blank" rel="noopener" style="font-size:.8rem;padding:.45rem .9rem;">📍 View on Google Maps</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CARD 3: DO NUA ────────────────────────────────────── -->
+      <div class="rec-card rec-bronze">
+        <div class="rec-header">
+          <span class="rec-medal">🥉</span>
+          <span class="rec-rank-label">3rd Recommendation</span>
+          <div class="rec-name">Do Nūa — La Villa Ari</div>
+          <div class="rec-meta">
+            <span class="rec-chip">⭐ 4.9</span>
+            <span class="rec-chip">💰 ฿200–400/pax</span>
+            <span class="rec-chip">🐄 Northern Thai / Beef</span>
+            <span class="rec-chip">📍 La Villa, 3rd Fl</span>
+          </div>
+          <div class="score-badge-lg">86</div>
+        </div>
+        <div class="rec-body">
+          <div class="pro-section">
+            <p class="rec-section-title">✅ Why It's #3 for Groups</p>
+            <ul class="strength-list">
+              <li>Best price-to-quality ratio in the entire dataset: <strong>4.9 stars at ฿200–400/pax</strong>. Full dinner for 10 = ฿2,500–4,500 total.</li>
+              <li>Northern Thai beef specialty is distinct enough to be memorable yet approachable for all Thai-food eaters.</li>
+              <li>La Villa complex on Phahonyothin Rd — among the best-connected locations in the dataset; BTS Ari in ~5 min walk.</li>
+              <li>Confirmed price range (no inference needed) — highest budget certainty of the three.</li>
+            </ul>
+          </div>
+          <div class="con-section" style="margin-top:.75rem;">
+            <p class="rec-section-title">⚠️ Trade-offs &amp; Risks</p>
+            <div class="risk-list">
+              <div class="risk-item"><strong>3rd Floor Arrival Bottleneck:</strong> Elevator + stairs in a boutique mall. Group of 10–12 arriving simultaneously creates a bottleneck — some members will be seated before others arrive.</div>
+              <div class="risk-item"><strong>Small Footprint Risk:</strong> La Villa tenants are small-format. Maximum contiguous seating may be fewer than 12. Walk-in is impossible; strict reservation required.</div>
+              <div class="risk-item"><strong>Beef-Centric Menu:</strong> "Do Nūa" = Northern beef. Guests who don't eat beef (religion, health) will find limited exciting options compared to a mixed-cuisine venue.</div>
+              <div class="risk-item"><strong>Potential Early Closing:</strong> Boutique mall tenants often close by 21:00–22:00. A team running overtime risks being rushed out or cut off from ordering additional rounds.</div>
+              <div class="risk-item"><strong>Lowest Group Score of Top 3 (14/20):</strong> The format is excellent for 4–6 people; fitting 8–12 comfortably is possible but not as naturally suited as YUKGA or Loy High.</div>
+            </div>
+          </div>
+          <div style="margin-top:1rem;">
+            <a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=Do+Nua+La+Villa+Ari&query_place_id=ChIJzSGKcbqd4jARz2juHM1CBWU" target="_blank" rel="noopener" style="font-size:.8rem;padding:.45rem .9rem;">📍 View on Google Maps</a>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /rec-grid -->
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+  §9  VERIFICATION & REFLECTION
+═══════════════════════════════════════════════════════════════════════════ -->
+<section id="reflection">
+  <div class="container">
+    <span class="section-label">§ 9 — Verification &amp; Reflection</span>
+    <h2>Verification Links &amp; Project Reflection</h2>
+
+    <div class="link-grid">
+      <a class="verify-link" href="https://docs.google.com/spreadsheets/d/1X_hEal9-iItjXLcxAug4ebW18nhaANGZ_n8VikpLMb0/edit?usp=sharing" target="_blank" rel="noopener">
+        📊 Google Sheets Workspace
+        <span style="font-size:.7rem;color:var(--text-light);">ai_food_assistant</span>
+      </a>
+      <a class="verify-link" href="https://drive.google.com/file/d/1lTWTo9L1HV7iGSV4H08qdAKnZy-SnV4c/view?usp=sharing" target="_blank" rel="noopener">
+        📜 Full Prompt History Log
+        <span style="font-size:.7rem;color:var(--text-light);">Google Drive</span>
+      </a>
+      <a class="verify-link" href="https://github.com/" target="_blank">
+        🌐 GitHub Pages Source
+        <span style="font-size:.7rem;color:var(--text-light);">(repo placeholder)</span>
+      </a>
+      <a class="verify-link" href="https://console.apify.com/view/runs/jd9g8uGI2UfphDm1c" target="_blank" rel="noopener">
+        🕷️ Apify Actor Runs
+        <span style="font-size:.7rem;color:var(--text-light);">jd9g8uGI2UfphDm1c</span>
+      </a>
+    </div>
+
+    <div class="ref-grid" style="margin-top:1.5rem;">
+
+      <!-- What Went Well -->
+      <div class="ref-item">
+        <h4>✅ What Went Well</h4>
+        <p style="font-size:.83rem; font-weight:700; color:var(--text); margin-bottom:.35rem;">System Architecture &amp; Hybrid Workflow</p>
+        <p style="font-size:.82rem;">The project successfully implemented a hybrid architecture by separating data collection (Apify), orchestration (n8n), storage (Google Sheets), and intelligence/scoring (Claude Cowork). This modular approach made the system stable, saved API credits, and allowed each stage to be tested independently.</p>
+        <p style="font-size:.83rem; font-weight:700; color:var(--text); margin-bottom:.35rem; margin-top:.75rem;">Effective Data Collection &amp; Automation</p>
+        <p style="font-size:.82rem;">The automated pipeline functioned successfully end-to-end. Apify reliably scraped 29–30 restaurant records focused on the Ari Zone with consistent data schemas, while operating within the free credit limits.</p>
+        <p style="font-size:.83rem; font-weight:700; color:var(--text); margin-bottom:.35rem; margin-top:.75rem;">AI Analysis &amp; HTML Output Completeness</p>
+        <p style="font-size:.82rem;">Claude accurately executed the 6-dimension scoring rubric, producing non-trivial rankings and actionable trade-offs rather than surface-level praise. The final HTML output was complete and incorporated all 9 mandatory sections.</p>
+      </div>
+
+      <!-- Automation Bugs -->
+      <div class="ref-item" style="border-left-color: var(--gold);">
+        <h4>⚠️ Automation Bugs &amp; Data Issues</h4>
+        <p style="font-size:.83rem; font-weight:700; color:var(--text); margin-bottom:.35rem;">Data Structure Conflicts &amp; Missing Fields</p>
+        <p style="font-size:.82rem;">Raw data from different sources had mismatched JSON structures (e.g., <code>title</code> vs. <code>name</code>), causing data mapping issues in n8n. Crucial fields like Source URLs and Price Ranges were also missing, disrupting scoring calculations.</p>
+        <p style="font-size:.83rem; font-weight:700; color:var(--text); margin-bottom:.35rem; margin-top:.75rem;">Google API Authentication Hurdles</p>
+        <p style="font-size:.82rem;">Multiple Google Sheets API issues arose: OAuth2 token expiration, security blocks from the app being stuck in "Testing Environment," and errors caused by failing to enable the API in Google Cloud Console.</p>
+        <p style="font-size:.83rem; font-weight:700; color:var(--text); margin-bottom:.35rem; margin-top:.75rem;">Integration &amp; Webhook Limitations</p>
+        <p style="font-size:.82rem;">Technical hurdles included 404 errors in n8n from dynamic Dataset ID mismatches, webhook timeouts exceeding n8n's 30-second limit from large Apify payloads, and the financial risk of draining Apify's limited $5 free credit.</p>
+      </div>
+
+      <!-- Lessons Learned -->
+      <div class="ref-item" style="border-left-color: var(--green);">
+        <h4>💡 Lessons Learned &amp; Mitigation Strategies</h4>
+        <p style="font-size:.83rem; font-weight:700; color:var(--text); margin-bottom:.35rem;">Resolving Data Conflicts via AI &amp; Restructuring</p>
+        <p style="font-size:.82rem;">Data conflicts were resolved by separating n8n's <em>"Append row in sheet"</em> nodes per source. Claude AI was then used to clean data, fill in missing Google Maps URLs, and normalise price ranges. The 404 error was bypassed by temporarily hardcoding the Dataset ID in n8n.</p>
+        <p style="font-size:.83rem; font-weight:700; color:var(--text); margin-bottom:.35rem; margin-top:.75rem;">Overcoming API &amp; Authentication Bottlenecks</p>
+        <p style="font-size:.82rem;">OAuth2 security hurdles were bypassed by switching to a Service Account (JSON Key) and granting "Editor" access directly to the bot's email. Key lesson: always ensure APIs are fully enabled in Google Cloud Console <em>before</em> running data pipelines.</p>
+        <p style="font-size:.83rem; font-weight:700; color:var(--text); margin-bottom:.35rem; margin-top:.75rem;">Optimizing Resources &amp; Webhook Stability</p>
+        <p style="font-size:.82rem;">Webhook timeouts were mitigated by switching to Apify dataset polling. Budget bleed was prevented by capping scraper output at 25–30 results and disabling individual review fetching. Future recommendation: extract price data at the scraping stage and add n8n data validation before writing to Sheets.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+  FOOTER
+═══════════════════════════════════════════════════════════════════════════ -->
+<footer>
+  <div class="container">
+    <p><strong>AI Food Decision Assistant</strong> · Ari Zone, Bangkok · Homework 03</p>
+    <p style="margin-top:.4rem;">Participant: <strong>Yord (Pongpeera Chai)</strong> &nbsp;|&nbsp; Analysis by <strong>Claude AI (Sonnet 4.6)</strong> &nbsp;|&nbsp; Date: June 6, 2026</p>
+    <p style="margin-top:.4rem; color:#475569; font-size:.75rem;">29 restaurants analysed · 6-dimension scoring model · 100-point rubric · Pipeline: Apify → n8n → Google Sheets → Claude AI → GitHub Pages</p>
+  </div>
+</footer>
+
+</body>
+</html>
