@@ -981,9 +981,13 @@
         🌐 GitHub Pages Source
         <span style="font-size:.7rem;color:var(--text-light);">pong-chai.github.io</span>
       </a>
-      <a class="verify-link" href="https://console.apify.com/view/runs/jd9g8uGI2UfphDm1c" target="_blank" rel="noopener">
-        🕷️ Apify Actor Runs
-        <span style="font-size:.7rem;color:var(--text-light);">jd9g8uGI2UfphDm1c</span>
+      <a class="verify-link" href="https://console.apify.com/view/runs/cfQnBaH0pkmgw1YyN" target="_blank" rel="noopener">
+        🕷️ Apify Actor Run — Google Maps Scraper
+        <span style="font-size:.7rem;color:var(--text-light);">cfQnBaH0pkmgw1YyN</span>
+      </a>
+      <a class="verify-link" href="https://console.apify.com/view/runs/dVnfeUBhSFJWldkIs" target="_blank" rel="noopener">
+        🕷️ Apify Actor Run — Tripadvisor Scraper
+        <span style="font-size:.7rem;color:var(--text-light);">dVnfeUBhSFJWldkIs</span>
       </a>
     </div>
 
@@ -1512,17 +1516,4 @@
 
   zoneSelect.addEventListener("change", renderAll);
   tierSelect.addEventListener("change", renderAll);
-  resetBtn.addEventListener("click", function () {
-    zoneSelect.value = "All";
-    tierSelect.value = "All";
-    renderAll();
-  });
-
-  // Initial paint from the embedded dataset, then attempt the local-CSV live overlay.
-  setSourceBadge(false);
-  renderAll();
-  fetchLiveCSVAndRender();
-})();
-</script>
-</body>
-</html>
+  resetBtn.addEventLi
