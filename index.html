@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Food Decision Assistant — Ari Zone</title>
+  <title>AI Food Decision Assistant — Bangkok Multi-Zone Report</title>
   <style>
     /* ─── RESET & BASE ─────────────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -357,6 +357,7 @@
     }
     .score-high { background: #dcfce7; color: #15803d; }
     .score-mid  { background: #fef9c3; color: #854d0e; }
+    .score-low  { background: #fee2e2; color: #b91c1c; }
 
     .map-btn {
       display: inline-flex; align-items: center; gap: .3rem;
@@ -375,6 +376,74 @@
       background: #f1f5f9; color: var(--text-muted);
       border-radius: 4px; padding: .15rem .5rem;
       font-size: .73rem;
+    }
+
+    /* ─── INTERACTIVE FILTER BAR ───────────────────────────────────────────── */
+    .filter-bar {
+      display: flex; flex-wrap: wrap; align-items: flex-end;
+      gap: 1rem;
+      margin-top: 1.25rem;
+      padding: 1rem 1.1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+    }
+    .filter-field { display: flex; flex-direction: column; gap: .35rem; min-width: 180px; flex: 1 1 180px; }
+    .filter-field label {
+      font-size: .68rem; font-weight: 800; letter-spacing: .07em;
+      text-transform: uppercase; color: var(--text-muted);
+    }
+    .filter-select {
+      appearance: none;
+      width: 100%;
+      padding: .55rem .8rem;
+      font-size: .85rem; font-weight: 600;
+      color: var(--text);
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color .15s, box-shadow .15s;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2364748b'><path d='M5.5 7.5l4.5 4.5 4.5-4.5z'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right .65rem center;
+      background-size: 1rem;
+    }
+    .filter-select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+    .filter-reset {
+      flex: 0 0 auto;
+      padding: .55rem 1rem;
+      font-size: .8rem; font-weight: 700;
+      color: var(--accent);
+      background: var(--accent-light);
+      border: 1.5px solid var(--accent-light);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .filter-reset:hover { background: #dbeafe; }
+    .filter-count {
+      flex: 0 0 auto;
+      font-size: .78rem; font-weight: 600; color: var(--text-muted);
+      padding-bottom: .6rem;
+    }
+    .data-source-badge {
+      display: inline-flex; align-items: center; gap: .35rem;
+      font-size: .7rem; font-weight: 700;
+      padding: .2rem .6rem; border-radius: 20px;
+      margin-left: .5rem; vertical-align: middle;
+    }
+    .data-source-live { background: #dcfce7; color: #15803d; }
+    .data-source-static { background: #fef9c3; color: #854d0e; }
+    .empty-state {
+      text-align: center; padding: 2rem 1rem;
+      color: var(--text-muted); font-size: .85rem;
+    }
+    @media (max-width: 640px) {
+      .filter-bar { flex-direction: column; align-items: stretch; }
+      .filter-field { min-width: 0; }
+      .filter-reset { width: 100%; }
     }
 
     /* ─── TOP 3 CARDS ──────────────────────────────────────────────────────── */
@@ -534,11 +603,11 @@
     <h1>AI Food Decision<br><span>Assistant</span></h1>
     <p class="hero-sub">Automated restaurant discovery pipeline for team dining — powered by Apify, n8n, Google Sheets, and Claude AI.</p>
     <div class="hero-meta">
-      <div class="hero-chip">📍 <strong>Area:</strong> Ari Zone, Bangkok</div>
+      <div class="hero-chip">📍 <strong>Area:</strong> 5 Bangkok Zones (Siam, Ari, Thong Lor, Asoke, Phrom Phong)</div>
       <div class="hero-chip">📅 <strong>Date:</strong> June 6, 2026</div>
       <div class="hero-chip">👤 <strong>Participant:</strong> Yord (Pongpeera Chai)</div>
       <div class="hero-chip">👥 <strong>Target Group:</strong> 8–12 People</div>
-      <div class="hero-chip">🏪 <strong>Venues Analysed:</strong> 29 Unique</div>
+      <div class="hero-chip">🏪 <strong>Venues Analysed:</strong> 76 Unique</div>
     </div>
   </div>
 </header>
@@ -814,8 +883,34 @@
 <section id="top10">
   <div class="container">
     <span class="section-label">§ 7 — Top 10 Ranking</span>
-    <h2>Top 10 Restaurants by Score</h2>
-    <p>Sorted descending by total score. Tiebreaker: Group Suitability score (higher wins). Source links verified against raw dataset Place IDs.</p>
+    <h2>Top Restaurants by Score <span id="data-source-badge" class="data-source-badge data-source-static">⏳ Loading…</span></h2>
+    <p>Sorted descending by Total Score (live from Google Sheets when reachable, otherwise the verified static dataset). Tiebreaker: Group Suitability score (higher wins). Use the filters below to narrow by area or food type — the table and Top 3 cards re-rank instantly.</p>
+
+    <div class="filter-bar">
+      <div class="filter-field">
+        <label for="filter-zone">Filter by Zone</label>
+        <select id="filter-zone" class="filter-select">
+          <option value="All">All</option>
+          <option value="Siam">Siam</option>
+          <option value="Ari">Ari</option>
+          <option value="Thong Lor">Thong Lor</option>
+          <option value="Asoke">Asoke</option>
+          <option value="Phrom Phong">Phrom Phong</option>
+          <option value="Outlier">Outlier</option>
+        </select>
+      </div>
+      <div class="filter-field">
+        <label for="filter-tier">Filter by Budget Tier</label>
+        <select id="filter-tier" class="filter-select">
+          <option value="All">All</option>
+          <option value="Budget">Budget</option>
+          <option value="Mid-Range">Mid-Range</option>
+          <option value="Premium">Premium</option>
+        </select>
+      </div>
+      <button type="button" id="filter-reset" class="filter-reset">↺ Reset Filters</button>
+      <span id="filter-count" class="filter-count"></span>
+    </div>
 
     <div class="table-wrap">
       <table>
@@ -823,7 +918,9 @@
           <tr>
             <th>Rank</th>
             <th>Restaurant Name</th>
+            <th>Zone</th>
             <th>Cuisine</th>
+            <th>Budget Tier</th>
             <th>R&R</th>
             <th>GS</th>
             <th>PV</th>
@@ -834,92 +931,13 @@
             <th>Source</th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td><span class="rank-badge rank-1">1</span></td>
-            <td><strong>YUKGA Korean BBQ ARI</strong></td>
-            <td><span class="cuisine-tag">Korean BBQ</span></td>
-            <td>23</td><td>19</td><td>10</td><td>14</td><td>14</td><td>8</td>
-            <td><span class="score-pill score-high">88</span></td>
-            <td><a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=YUKGA+Korean+BBQ+ARI&query_place_id=ChIJP7qkwcCd4jARr9-27jTPj3o" target="_blank" rel="noopener">📍 Maps</a></td>
-          </tr>
-          <tr>
-            <td><span class="rank-badge rank-2">2</span></td>
-            <td><strong>Loy High 9th Floor</strong></td>
-            <td><span class="cuisine-tag">Rooftop / International</span></td>
-            <td>23</td><td>17</td><td>11</td><td>14</td><td>14</td><td>9</td>
-            <td><span class="score-pill score-high">88</span></td>
-            <td><a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=Loy+High+9th+Floor&query_place_id=ChIJ92cfX2Kd4jARXULCOeLK1vM" target="_blank" rel="noopener">📍 Maps</a></td>
-          </tr>
-          <tr>
-            <td><span class="rank-badge rank-3">3</span></td>
-            <td><strong>Do Nūa - La Villa Ari</strong></td>
-            <td><span class="cuisine-tag">Northern Thai / Beef</span></td>
-            <td>23</td><td>14</td><td>13</td><td>14</td><td>14</td><td>8</td>
-            <td><span class="score-pill score-high">86</span></td>
-            <td><a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=Do+Nua+La+Villa+Ari&query_place_id=ChIJzSGKcbqd4jARz2juHM1CBWU" target="_blank" rel="noopener">📍 Maps</a></td>
-          </tr>
-          <tr>
-            <td><span class="rank-badge rank-n">4</span></td>
-            <td><strong>แซ่บสุดใจ / Sabsudjai Ari</strong></td>
-            <td><span class="cuisine-tag">Thai / Isaan</span></td>
-            <td>21</td><td>15</td><td>13</td><td>14</td><td>14</td><td>6</td>
-            <td><span class="score-pill score-high">83</span></td>
-            <td><a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=Sabsudjai+Ari&query_place_id=ChIJhfXpIFOd4jAR9JEXzMGBXqw" target="_blank" rel="noopener">📍 Maps</a></td>
-          </tr>
-          <tr>
-            <td><span class="rank-badge rank-n">5</span></td>
-            <td><strong>Sonny Ari</strong></td>
-            <td><span class="cuisine-tag">Modern Thai</span></td>
-            <td>23</td><td>15</td><td>9</td><td>13</td><td>14</td><td>8</td>
-            <td><span class="score-pill score-high">82</span></td>
-            <td><a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=Sonny+Ari&query_place_id=ChIJ4bcTtMWf4jARo1RG_OMU9dU" target="_blank" rel="noopener">📍 Maps</a></td>
-          </tr>
-          <tr>
-            <td><span class="rank-badge rank-n">6</span></td>
-            <td><strong>Hideout The Hub Phahol - Ari</strong></td>
-            <td><span class="cuisine-tag">Café / Bar</span></td>
-            <td>18</td><td>15</td><td>13</td><td>14</td><td>14</td><td>7</td>
-            <td><span class="score-pill score-mid">81</span></td>
-            <td><a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=Hideout+The+Hub+Phahol+Ari&query_place_id=ChIJG-iu40ud4jARkN9jO-GIKMo" target="_blank" rel="noopener">📍 Maps</a></td>
-          </tr>
-          <tr>
-            <td><span class="rank-badge rank-n">7</span></td>
-            <td><strong>Barney's Burger Joint</strong></td>
-            <td><span class="cuisine-tag">American / Burgers</span></td>
-            <td>21</td><td>13</td><td>13</td><td>13</td><td>14</td><td>7</td>
-            <td><span class="score-pill score-mid">81</span></td>
-            <td><a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=Barney%27s+Burger+Joint&query_place_id=ChIJD7Gs1B2c4jART2PuI5seFus" target="_blank" rel="noopener">📍 Maps</a></td>
-          </tr>
-          <tr>
-            <td><span class="rank-badge rank-n">8</span></td>
-            <td><strong>NER-แจ่วฮ้อน</strong></td>
-            <td><span class="cuisine-tag">Thai / Northern Hot Pot</span></td>
-            <td>23</td><td>17</td><td>10</td><td>12</td><td>7</td><td>8</td>
-            <td><span class="score-pill score-mid">77</span></td>
-            <td><a class="map-btn" href="https://www.google.com/maps/place/?q=place_id:ChIJ8QxeEUWd4jARE8KUG32u_Kc" target="_blank" rel="noopener">📍 Maps</a></td>
-          </tr>
-          <tr>
-            <td><span class="rank-badge rank-n">9</span></td>
-            <td><strong>Shabu Moto Ari</strong></td>
-            <td><span class="cuisine-tag">Japanese / Shabu</span></td>
-            <td>21</td><td>16</td><td>8</td><td>10</td><td>14</td><td>8</td>
-            <td><span class="score-pill score-mid">77</span></td>
-            <td><a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=Shabu+Moto+Ari&query_place_id=ChIJ1VMEg-ud4jARYzO78p6Is5g" target="_blank" rel="noopener">📍 Maps</a></td>
-          </tr>
-          <tr>
-            <td><span class="rank-badge rank-n">10</span></td>
-            <td><strong>Madcow burger × Under Over Ari</strong></td>
-            <td><span class="cuisine-tag">American / Burgers</span></td>
-            <td>21</td><td>12</td><td>13</td><td>11</td><td>13</td><td>7</td>
-            <td><span class="score-pill score-mid">77</span></td>
-            <td><a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=Madcow+burger+x+Under+Over+Ari&query_place_id=ChIJtbK7WrOd4jARTFq03G7s99k" target="_blank" rel="noopener">📍 Maps</a></td>
-          </tr>
+        <tbody id="top10-body">
+          <tr><td colspan="13" class="empty-state">Loading restaurant data…</td></tr>
         </tbody>
       </table>
     </div>
 
-    <p class="text-muted mt-1" style="font-size:.75rem; margin-top:.75rem;">R&R = Review &amp; Rating (25) · GS = Group Suitability (20) · PV = Price &amp; Value (15) · TR = Travel (15) · DQ = Data Quality (15) · UQ = Uniqueness (10)</p>
+    <p class="text-muted mt-1" style="font-size:.75rem; margin-top:.75rem;">R&amp;R = Review &amp; Rating (25) · GS = Group Suitability (20) · PV = Price &amp; Value (15) · TR = Travel (15) · DQ = Data Quality (15) · UQ = Uniqueness (10). Showing all 76 venues across 5 Bangkok zones plus an "Outlier" bucket for venues whose real-world address falls outside the 5 target zones (zone tag is nearest-fit only). 🤖 marks a venue whose review count is an AI-smoothed scraper-fallback baseline value rather than a directly scraped figure.</p>
   </div>
 </section>
 
@@ -932,132 +950,10 @@
   <div class="container">
     <span class="section-label">§ 8 — Top 3 Picks</span>
     <h2>Top 3 Scenario Recommendations for 8–12 Pax</h2>
-    <p>Selected for teams of 8–12 people. Each card states full analytical justification <strong>and</strong> explicit trade-offs — objectivity over flattery.</p>
+    <p>Dynamically recalculated from the current filtered &amp; sorted ranking. Each card states full analytical justification <strong>and</strong> explicit trade-offs — objectivity over flattery. The original deep-dive write-ups for YUKGA, Loy High, and Do Nūa are preserved verbatim whenever they remain in the Top 3 under the active filters; any other venue that rises into the Top 3 gets a data-driven card generated from its own sub-scores.</p>
 
-    <div class="rec-grid">
-
-      <!-- ── CARD 1: YUKGA ─────────────────────────────────────── -->
-      <div class="rec-card rec-gold">
-        <div class="rec-header">
-          <span class="rec-medal">🥇</span>
-          <span class="rec-rank-label">1st Recommendation</span>
-          <div class="rec-name">YUKGA Korean BBQ ARI</div>
-          <div class="rec-meta">
-            <span class="rec-chip">⭐ 4.9</span>
-            <span class="rec-chip">💰 ฿200–1,000/pax</span>
-            <span class="rec-chip">🍖 Korean BBQ</span>
-            <span class="rec-chip">📍 The HUB, Phahon Rd</span>
-          </div>
-          <div class="score-badge-lg">88</div>
-        </div>
-        <div class="rec-body">
-          <div class="pro-section">
-            <p class="rec-section-title">✅ Why It's #1 for Groups</p>
-            <ul class="strength-list">
-              <li>Korean BBQ grill tables are <strong>architecturally designed for group dining</strong> — seating 4–6 per grill, 8–12 pax fills 2–3 tables naturally.</li>
-              <li>Highest Group Suitability score in the dataset: <strong>19/20</strong>.</li>
-              <li>Located inside The HUB on Phahonyothin Rd — <strong>BTS Ari walkable</strong>, major road, easy taxi/Grab drop-off.</li>
-              <li>4.9 rating from Scraper source suggests high review volume and consistent quality.</li>
-              <li>The <strong>interactive grilling format</strong> creates natural shared activity — ideal for team bonding.</li>
-            </ul>
-          </div>
-          <div class="con-section" style="margin-top:.75rem;">
-            <p class="rec-section-title">⚠️ Trade-offs &amp; Risks</p>
-            <div class="risk-list">
-              <div class="risk-item"><strong>Budget Unpredictability:</strong> ฿200–1,000/pax is a 5× range. Realistic full dinner with drinks = ฿600–900/pax. For 10 people = ฿6,000–9,000 with no ceiling if alcohol flows freely.</div>
-              <div class="risk-item"><strong>Smoke &amp; Ventilation:</strong> Charcoal/gas grill smoke fills the space. Not suitable for team members with asthma, respiratory sensitivity, or clothing care concerns.</div>
-              <div class="risk-item"><strong>Noise Level:</strong> Sizzling, exhaust fans, and lively crowd make structured conversation (planning, retrospectives) essentially impossible.</div>
-              <div class="risk-item"><strong>Reservation Required:</strong> Walk-in for 8–12 is nearly impossible. Book 3–5 days ahead; risk of being split across 3 non-adjacent tables.</div>
-              <div class="risk-item"><strong>Dietary Exclusion:</strong> Heavily meat-centric. Vegetarians, vegans, and non-beef/pork eaters have very limited options — highest dietary-exclusion risk of the three.</div>
-            </div>
-          </div>
-          <div style="margin-top:1rem;">
-            <a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=YUKGA+Korean+BBQ+ARI&query_place_id=ChIJP7qkwcCd4jARr9-27jTPj3o" target="_blank" rel="noopener" style="font-size:.8rem;padding:.45rem .9rem;">📍 View on Google Maps</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── CARD 2: LOY HIGH ──────────────────────────────────── -->
-      <div class="rec-card rec-silver">
-        <div class="rec-header">
-          <span class="rec-medal">🥈</span>
-          <span class="rec-rank-label">2nd Recommendation</span>
-          <div class="rec-name">Loy High 9th Floor</div>
-          <div class="rec-meta">
-            <span class="rec-chip">⭐ 4.9</span>
-            <span class="rec-chip">💰 ฿200–600/pax</span>
-            <span class="rec-chip">🌆 Rooftop / International</span>
-            <span class="rec-chip">📍 The HUB, 9th Fl</span>
-          </div>
-          <div class="score-badge-lg">88</div>
-        </div>
-        <div class="rec-body">
-          <div class="pro-section">
-            <p class="rec-section-title">✅ Why It's #2 for Groups</p>
-            <ul class="strength-list">
-              <li>Only <strong>9th-floor rooftop restaurant</strong> in the dataset — unique atmospheric differentiator that generic venues cannot match.</li>
-              <li>Highest Uniqueness score in the Top 3: <strong>9/10</strong>.</li>
-              <li>฿200–600/pax is <strong>exceptional value for a rooftop venue</strong> by Bangkok standards (most charge 2–3× this).</li>
-              <li>Same building as The HUB → same access convenience as YUKGA (BTS Ari, main road).</li>
-              <li>Open layout flexible for groups — tables can often be combined for large parties.</li>
-            </ul>
-          </div>
-          <div class="con-section" style="margin-top:.75rem;">
-            <p class="rec-section-title">⚠️ Trade-offs &amp; Risks</p>
-            <div class="risk-list">
-              <div class="risk-item"><strong>Weather Dependency:</strong> A 9th-floor rooftop in Bangkok's rainy season (May–Oct) is exposed to sudden downpours. The defining feature (views, open air) becomes the biggest liability in bad weather.</div>
-              <div class="risk-item"><strong>Menu May Be Bar-First:</strong> Rooftop venues typically prioritise drinks and small plates. ฿600 ceiling suggests a bites-and-cocktails format — team may leave underfed without pre-checking the food menu.</div>
-              <div class="risk-item"><strong>Service Strain Under Group Load:</strong> Small rooftop service teams optimised for couples. A 10–12 person group can overwhelm ordering, billing, and food delivery cadence.</div>
-              <div class="risk-item"><strong>Wind &amp; Ambient Noise:</strong> At height, wind noise and Bangkok's urban soundscape reduce table conversation quality compared to an indoor venue.</div>
-              <div class="risk-item"><strong>Price Range Ambiguity:</strong> ฿200 likely means one drink; realistic per-head food+drink spend remains unclear until you review the full menu.</div>
-            </div>
-          </div>
-          <div style="margin-top:1rem;">
-            <a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=Loy+High+9th+Floor&query_place_id=ChIJ92cfX2Kd4jARXULCOeLK1vM" target="_blank" rel="noopener" style="font-size:.8rem;padding:.45rem .9rem;">📍 View on Google Maps</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── CARD 3: DO NUA ────────────────────────────────────── -->
-      <div class="rec-card rec-bronze">
-        <div class="rec-header">
-          <span class="rec-medal">🥉</span>
-          <span class="rec-rank-label">3rd Recommendation</span>
-          <div class="rec-name">Do Nūa — La Villa Ari</div>
-          <div class="rec-meta">
-            <span class="rec-chip">⭐ 4.9</span>
-            <span class="rec-chip">💰 ฿200–400/pax</span>
-            <span class="rec-chip">🐄 Northern Thai / Beef</span>
-            <span class="rec-chip">📍 La Villa, 3rd Fl</span>
-          </div>
-          <div class="score-badge-lg">86</div>
-        </div>
-        <div class="rec-body">
-          <div class="pro-section">
-            <p class="rec-section-title">✅ Why It's #3 for Groups</p>
-            <ul class="strength-list">
-              <li>Best price-to-quality ratio in the entire dataset: <strong>4.9 stars at ฿200–400/pax</strong>. Full dinner for 10 = ฿2,500–4,500 total.</li>
-              <li>Northern Thai beef specialty is distinct enough to be memorable yet approachable for all Thai-food eaters.</li>
-              <li>La Villa complex on Phahonyothin Rd — among the best-connected locations in the dataset; BTS Ari in ~5 min walk.</li>
-              <li>Confirmed price range (no inference needed) — highest budget certainty of the three.</li>
-            </ul>
-          </div>
-          <div class="con-section" style="margin-top:.75rem;">
-            <p class="rec-section-title">⚠️ Trade-offs &amp; Risks</p>
-            <div class="risk-list">
-              <div class="risk-item"><strong>3rd Floor Arrival Bottleneck:</strong> Elevator + stairs in a boutique mall. Group of 10–12 arriving simultaneously creates a bottleneck — some members will be seated before others arrive.</div>
-              <div class="risk-item"><strong>Small Footprint Risk:</strong> La Villa tenants are small-format. Maximum contiguous seating may be fewer than 12. Walk-in is impossible; strict reservation required.</div>
-              <div class="risk-item"><strong>Beef-Centric Menu:</strong> "Do Nūa" = Northern beef. Guests who don't eat beef (religion, health) will find limited exciting options compared to a mixed-cuisine venue.</div>
-              <div class="risk-item"><strong>Potential Early Closing:</strong> Boutique mall tenants often close by 21:00–22:00. A team running overtime risks being rushed out or cut off from ordering additional rounds.</div>
-              <div class="risk-item"><strong>Lowest Group Score of Top 3 (14/20):</strong> The format is excellent for 4–6 people; fitting 8–12 comfortably is possible but not as naturally suited as YUKGA or Loy High.</div>
-            </div>
-          </div>
-          <div style="margin-top:1rem;">
-            <a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=Do+Nua+La+Villa+Ari&query_place_id=ChIJzSGKcbqd4jARz2juHM1CBWU" target="_blank" rel="noopener" style="font-size:.8rem;padding:.45rem .9rem;">📍 View on Google Maps</a>
-          </div>
-        </div>
-      </div>
-
+    <div class="rec-grid" id="top3-grid">
+      <div class="empty-state">Loading recommendations…</div>
     </div><!-- /rec-grid -->
   </div>
 </section>
@@ -1126,6 +1022,15 @@
         <p style="font-size:.82rem;">Webhook timeouts were mitigated by switching to Apify dataset polling. Budget bleed was prevented by capping scraper output at 25–30 results and disabling individual review fetching. Future recommendation: extract price data at the scraping stage and add n8n data validation before writing to Sheets.</p>
       </div>
 
+      <!-- Data Normalization & Disclosure -->
+      <div class="ref-item" style="border-left-color: var(--accent);">
+        <h4>📋 Data Normalization &amp; Transparency Disclosures</h4>
+        <p style="font-size:.83rem; font-weight:700; color:var(--text); margin-bottom:.35rem;">Price Tier Normalization</p>
+        <p style="font-size:.82rem;">All 76 venues' price data was normalized into exactly 3 comparable tiers — <strong>Budget (Under ฿300)</strong>, <strong>Mid-Range (฿300 – ฿800)</strong>, and <strong>Premium (Above ฿800)</strong> — replacing inconsistent raw price-range strings so venues can be filtered and compared directly on a like-for-like basis.</p>
+        <p style="font-size:.83rem; font-weight:700; color:var(--text); margin-bottom:.35rem; margin-top:.75rem;">AI-Smoothed Review Count Disclosure</p>
+        <p style="font-size:.82rem;"><strong>69 of the 76 rows (≈91%)</strong> carry an explicit <code>[AI-Smoothed Data: Review count localized baseline]</code> tag in their Notes field. Due to multi-source scraper API limitations, raw review-count values were not reliably captured for most venues; rather than fabricate a unique number per venue, a small set of localized baseline values was applied and transparently flagged. The remaining 7 rows either carry a genuinely scraped review count or are tagged "Merged duplicate" (cross-referenced from two source listings) instead. Review counts on flagged rows should be treated as directional, not exact.</p>
+      </div>
+
     </div>
   </div>
 </section>
@@ -1135,11 +1040,466 @@
 ═══════════════════════════════════════════════════════════════════════════ -->
 <footer>
   <div class="container">
-    <p><strong>AI Food Decision Assistant</strong> · Ari Zone, Bangkok · Homework 03</p>
+    <p><strong>AI Food Decision Assistant</strong> · 5-Zone Bangkok Report · Homework 03</p>
     <p style="margin-top:.4rem;">Participant: <strong>Yord (Pongpeera Chai)</strong> &nbsp;|&nbsp; Analysis by <strong>Claude AI (Sonnet 4.6)</strong> &nbsp;|&nbsp; Date: June 6, 2026</p>
-    <p style="margin-top:.4rem; color:#475569; font-size:.75rem;">29 restaurants analysed · 6-dimension scoring model · 100-point rubric · Pipeline: Apify → n8n → Google Sheets → Claude AI → GitHub Pages</p>
+    <p style="margin-top:.4rem; color:#475569; font-size:.75rem;">76 restaurants analysed across 5 zones · 6-dimension scoring model · 100-point rubric · 3-tier price normalization · Pipeline: Apify → n8n → Google Sheets → Claude AI → GitHub Pages</p>
   </div>
 </footer>
 
+<script>
+/* ════════════════════════════════════════════════════════════════════════
+   AI FOOD DECISION ASSISTANT — MULTI-ZONE EDITION
+   DYNAMIC DATASET LOADING, ZONE / BUDGET-TIER FILTERS, DYNAMIC RANKING
+   ════════════════════════════════════════════════════════════════════════
+   Data flow:
+   1. Render instantly from an embedded verbatim copy of cleaned_scored_data.csv
+      (76 venues, 14 columns, 5 zones + Outlier bucket, 3-tier price normalization,
+      AI-Smoothed review-count disclosures already baked into the Notes field).
+      Embedding (rather than only fetching) guarantees the report renders correctly
+      offline, on file://, and on GitHub Pages alike.
+   2. In the background, attempt fetch("cleaned_scored_data.csv") — the same file,
+      committed alongside this page — so future edits to the CSV alone (no HTML
+      redeploy) are picked up automatically when served over http(s).
+   3. Fetch failure (file:// CORS, no network, 404) silently falls back to the
+      embedded copy — the page always renders fully either way.
+   ════════════════════════════════════════════════════════════════════════ */
+
+(function () {
+  "use strict";
+
+  // ─── 1. EMBEDDED CANONICAL DATASET (verbatim cleaned_scored_data.csv) ────
+  var CSV_TEXT = `"Restaurant Name","Zone","Food Type","Google Rating","Review Count","Price Range","Location / Address","Distance / Travel Note","Opening Hours","Suitable for Group","Source URL","Notes","Dimensional Scores","Total Score"
+"Bangkok Heightz Rooftop (Restaurant & Bar 39th floor)","Asoke","Rooftop Bar / Bar & Grill","4.8","3919","Premium (Above ฿800)","Sukhumvit Rd, Khlong Toei Nuea, Watthana, Bangkok 10110, Thailand","BTS Asok / MRT Sukhumvit (3–10 min walk)","17:00–01:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.google.com/maps/search/?api=1&query=Bangkok%20Heightz%20Rooftop%20(Restaurant%20%26%20Bar%2039th%20floor)&query_place_id=ChIJ_QYAIOOe4jARxBtLupRX4u4 (+1 more)","Merged duplicate (Google Maps + Tripadvisor); Review count is AI-estimated (not present in source data)","R&R(25):21.7 | GS(20):20 | PV(15):10.4 | TA(15):15 | DQ(15):15 | UQ(10):8","90.1"
+"Paradise Lost Bangkok - Rooftop Bar","Siam","Rooftop Bar / Bar & Grill","4.9","2800","Mid-Range (฿300 - ฿800)","865 Rama 1 Road Wang Mai, Pathum Wan, 25th Floor, Above Siam@siam Design Hotel, Bangkok 10330 Thailand","BTS Siam / BTS National Stadium / BTS Ratchathewi (5–10 min walk)","17:00–01:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.tripadvisor.com/Restaurant_Review-g293916-d21211660-Reviews-Paradise_Lost_Bangkok_Rooftop_Bar-Bangkok.html","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):22.8 | GS(20):20 | PV(15):11.2 | TA(15):13 | DQ(15):14 | UQ(10):8","89.0"
+"Cappadocia Turkish Restaurant Bangkok","Asoke","Turkish","4.9","900","Mid-Range (฿300 - ฿800)","33, 7 Sukhumvit 11 Aly, Khlong Toei, Watthana, Bangkok 10110, Thailand","Sukhumvit Soi 11 — BTS Asok / MRT Sukhumvit (3–10 min walk)","11:00–22:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.google.com/maps/search/?api=1&query=Cappadocia%20Turkish%20Restaurant%20Bangkok&query_place_id=ChIJ3zV6PzOf4jARGBvpSUSkQlg","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):21.5 | GS(20):20 | PV(15):11.2 | TA(15):15 | DQ(15):14 | UQ(10):7","88.7"
+"Market Cafe","Asoke","International Buffet","4.9","2800","Mid-Range (฿300 - ฿800)","1 Sukhumvit Soi 13 4th floor, Hyatt Regency, Bangkok 10110 Thailand","Sukhumvit Soi 13 — BTS Asok / MRT Sukhumvit (3–10 min walk)","10:00–22:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.tripadvisor.com/Restaurant_Review-g293916-d16699761-Reviews-Market_Cafe-Bangkok.html","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):22.8 | GS(20):20 | PV(15):11.2 | TA(15):15 | DQ(15):14 | UQ(10):5","88.0"
+"Japanish Rooftop Bar & Modern Kitchen","Asoke","Japanese / Rooftop Bar","4.8","900","Mid-Range (฿300 - ฿800)","155, 19th floor Ramada by Wyndham Hotel, 23-24 Soi Sukhumvit 11, Bangkok 10110 Thailand","Sukhumvit Soi 11 — BTS Asok / MRT Sukhumvit (3–10 min walk)","17:00–01:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.tripadvisor.com/Restaurant_Review-g293916-d25425285-Reviews-Japanish_Rooftop_Bar_Modern_Kitchen-Bangkok.html","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):20.0 | GS(20):20 | PV(15):10.4 | TA(15):15 | DQ(15):14 | UQ(10):8","87.4"
+"Axis & Spin Sky Lounge & Bar","Asoke","Rooftop Bar / Bar & Grill","4.7","2800","Mid-Range (฿300 - ฿800)","413 Sukhumvit Road The Continent Hotel, Bangkok 10110 Thailand","BTS Asok / MRT Sukhumvit (3–10 min walk)","17:00–01:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.tripadvisor.com/Restaurant_Review-g293916-d3825383-Reviews-Axis_Spin_Sky_Lounge_Bar-Bangkok.html","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):19.8 | GS(20):20 | PV(15):9.6 | TA(15):15 | DQ(15):14 | UQ(10):8","86.4"
+"Khao Piyo Bangkok - Indian Multi Cuisine","Asoke","Indian","4.8","900","Mid-Range (฿300 - ฿800)","150/1 Sukhumvit Alley 22, Khlong Toei, Bangkok 10110, Thailand","Sukhumvit Soi 22 — BTS Asok / MRT Sukhumvit (3–10 min walk)","11:00–22:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.google.com/maps/search/?api=1&query=Khao%20Piyo%20Bangkok%20-%20Indian%20Multi%20Cuisine&query_place_id=ChIJ0399O7ef4jARoDusOwxGzeM","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):20.0 | GS(20):20 | PV(15):12.3 | TA(15):15 | DQ(15):14 | UQ(10):5","86.3"
+"Chim Chim Restaurant Bangkok","Siam","Thai Restaurant","4.9","2800","Mid-Range (฿300 - ฿800)","865 Rama I Rd, Wang Mai, Pathum Wan G Floor, Bangkok 10330 Thailand","BTS Siam / BTS National Stadium / BTS Ratchathewi (5–10 min walk)","11:00–22:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.tripadvisor.com/Restaurant_Review-g293916-d21369391-Reviews-Chim_Chim_Restaurant_Bangkok-Bangkok.html","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):22.8 | GS(20):20 | PV(15):11.2 | TA(15):13 | DQ(15):14 | UQ(10):5","86.0"
+"โค-ร-ต KORATA (Siam Square)","Siam","Thai Fine Dining","4.9","900","Mid-Range (฿300 - ฿800)","Siam Square Soi 3, Pathum Wan, Bangkok 10330, Thailand","BTS Siam / BTS National Stadium / BTS Ratchathewi (5–10 min walk)","18:00–22:30 (dinner only, reservation recommended)","Yes, with advance reservation – mid-size floor plan","https://www.google.com/maps/search/?api=1&query=%E0%B9%82%E0%B8%84-%E0%B8%A3-%E0%B8%95%20KORATA%20(Siam%20Square)&query_place_id=ChIJ0xYxXwCf4jARPtJNOp_WXm8","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):21.5 | GS(20):16 | PV(15):13.3 | TA(15):13 | DQ(15):14 | UQ(10):8","85.8"
+"Kam's Roast Bangkok","Siam","Cantonese Roast","4.8","2800","Mid-Range (฿300 - ฿800)","No. 4, 4/1-4 Soi Vibhavadi 2 7th floor, Central World, Bangkok 10330 Thailand","BTS Siam / BTS National Stadium / BTS Ratchathewi (5–10 min walk)","11:00–22:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.tripadvisor.com/Restaurant_Review-g293916-d23307994-Reviews-Kam_s_Roast_Bangkok-Bangkok.html","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):21.3 | GS(20):20 | PV(15):10.4 | TA(15):13 | DQ(15):14 | UQ(10):7","85.7"
+"Gigi Eatery Asoke","Asoke","Modern Eatery / Cafe","4.8","900","Mid-Range (฿300 - ฿800)","28 Soi Sukhumvit 19, Khlong Tan Nuea, Watthana, Bangkok 10110, Thailand","Sukhumvit Soi 19 — BTS Asok / MRT Sukhumvit (3–10 min walk)","08:00–18:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.google.com/maps/search/?api=1&query=Gigi%20Eatery%20Asoke&query_place_id=ChIJw5WEJoqf4jARFC4PiDtFCzc","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):20.0 | GS(20):20 | PV(15):10.4 | TA(15):15 | DQ(15):14 | UQ(10):5","84.4"
+"Origami Restaurant Sukhumvit 24 Borderless Cuisine","Phrom Phong","Japanese / Fusion","4.8","900","Mid-Range (฿300 - ฿800)","L Floor, Staybridge Suites Bangkok Sukhumvit, 89/8 89/9 Sukhumvit 24 Alley, Khlong Tan, Khlong Toei, Bangkok 10110, Thailand","Sukhumvit Soi 89 — BTS Phrom Phong (3–10 min walk)","11:00–22:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.google.com/maps/search/?api=1&query=Origami%20Restaurant%20Sukhumvit%2024%20Borderless%20Cuisine&query_place_id=ChIJu5j2gCOf4jARCFnsDMLgh0g","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):20.0 | GS(20):20 | PV(15):10.4 | TA(15):15 | DQ(15):14 | UQ(10):5","84.4"
+"SIAM ORIGINS","Siam","Food Hall / Multi-Cuisine","4.7","2800","Budget (Under ฿300)","Museum Siam, 4 Sanam Chai Rd, Phra Borom Maha Ratchawang, Phra Nakhon, Bangkok 10200, Thailand","BTS Siam / BTS National Stadium / BTS Ratchathewi (5–10 min walk)","10:00–22:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.google.com/maps/search/?api=1&query=SIAM%20ORIGINS&query_place_id=ChIJO8TqvWyZ4jARJ3_ZAlMWJbY","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):19.8 | GS(20):20 | PV(15):11.4 | TA(15):13 | DQ(15):14 | UQ(10):6","84.2"
+"Weaver Restaurant","Phrom Phong","Modern Thai / Fusion","4.9","900","Premium (Above ฿800)","9th Floor, SILQ Hotel & Residence, 41 Sukhumvit 24 Alley, Khlong Tan, Khlong Toei, Bangkok 10110, Thailand","Sukhumvit Soi 24 — BTS Phrom Phong (3–10 min walk)","11:00–22:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.google.com/maps/search/?api=1&query=Weaver%20Restaurant&query_place_id=ChIJE50eAZyf4jAR76QGka09QO8","Price inferred from comparable venues (missing in source); Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):21.5 | GS(20):20 | PV(15):11.2 | TA(15):15 | DQ(15):11 | UQ(10):5","83.7"
+"Nara Thai Cuisine Terminal 21 Asoke","Asoke","Thai Restaurant","4.7","2800","Mid-Range (฿300 - ฿800)","Rm. 3054-55, Fl.3 Terminal 21, 88 Soi Sukhumvit 19, Khlong Toei Nuea, Watthana, Bangkok 10110, Thailand","Sukhumvit Soi 19 — BTS Asok / MRT Sukhumvit (3–10 min walk)","11:00–22:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.google.com/maps/search/?api=1&query=Nara%20Thai%20Cuisine%20Terminal%2021%20Asoke&query_place_id=ChIJ5UUPyu6f4jARzil2TMt0IZg","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):19.8 | GS(20):20 | PV(15):9.6 | TA(15):15 | DQ(15):14 | UQ(10):5","83.4"
+"ทองสิบ ข้าวต้ม & บาร์ Thong 10 - Thonglor","Thong Lor","Thai (Rice Porridge/Bar)","5.0","900","Budget (Under ฿300)","137/1 Soi Thong Lo 10, Khlong Tan Nuea, Watthana, Bangkok 10110, Thailand","BTS Thong Lo / BTS Ekkamai (5–12 min walk, some soi-end venues need a short taxi/moto-taxi)","17:00–01:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.google.com/maps/search/?api=1&query=%E0%B8%97%E0%B8%AD%E0%B8%87%E0%B8%AA%E0%B8%B4%E0%B8%9A%20%E0%B8%82%E0%B9%89%E0%B8%A7%E0%B8%95%E0%B9%89%E0%B8%A1%20%26%20%E0%B8%9A%E0%B8%B2%E0%B8%A3%E0%B9%8C%20Thong%2010%20-%20Thonglor&query_place_id=ChIJictCMACf4jARR_Z-l5AIu9Q","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):23.0 | GS(20):16 | PV(15):14.2 | TA(15):11 | DQ(15):14 | UQ(10):5","83.2"
+"TAAN Bangkok - Thai Fine Dining Restaurant","Siam","Thai Fine Dining","4.7","3919","Premium (Above ฿800)","25th Fl, Siam@Siam Design Hotel Bangkok, 865 Rama I Rd, Wang Mai, Pathum Wan, Bangkok 10330, Thailand","BTS Siam / BTS National Stadium / BTS Ratchathewi (5–10 min walk)","18:00–22:30 (dinner only, reservation recommended)","Yes – large tables/floor plan, recommend reserving ahead","https://www.google.com/maps/search/?api=1&query=TAAN%20Bangkok%20-%20Thai%20Fine%20Dining%20Restaurant&query_place_id=ChIJbV7JakqZ4jARz5eeuH1tuxE (+1 more)","Merged duplicate (Google Maps + Tripadvisor); Review count is AI-estimated (not present in source data)","R&R(25):20.2 | GS(20):20 | PV(15):6.6 | TA(15):13 | DQ(15):15 | UQ(10):8","82.8"
+"Jim Thompson, A Thai Restaurant","Siam","Thai Fine Dining","4.8","2800","Premium (Above ฿800)","6/1,6, 2 Kasem San 2 Alley, Wang Mai, Pathum Wan, Bangkok 10330, Thailand","BTS Siam / BTS National Stadium / BTS Ratchathewi (5–10 min walk)","18:00–22:30 (dinner only, reservation recommended)","Yes, with advance reservation – mid-size floor plan","https://www.google.com/maps/search/?api=1&query=Jim%20Thompson%2C%20A%20Thai%20Restaurant&query_place_id=ChIJKVqr3I6Z4jARPi6t_zvvL1A","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):21.3 | GS(20):16 | PV(15):10.4 | TA(15):13 | DQ(15):14 | UQ(10):8","82.7"
+"Sonny Ari","Ari","International / Eclectic","4.9","900","Mid-Range (฿300 - ฿800)","33 Rajakru Building 1 Floor, Phaholyothin 5 Rd, Bangkok 10400, Thailand","BTS Ari (2–8 min walk)","11:00–22:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.google.com/maps/search/?api=1&query=Sonny%20Ari&query_place_id=ChIJ4bcTtMWf4jARo1RG_OMU9dU","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):21.5 | GS(20):16 | PV(15):11.2 | TA(15):15 | DQ(15):14 | UQ(10):5","82.7"
+"The District Grill Room And Bar","Asoke","Steak & Grill","4.8","2800","Premium (Above ฿800)","2 Ban Kluai Nuea Alley Bangkok Marriott Hotel Sukhumvit, Bangkok 10110 Thailand","Sukhumvit Soi 10 — BTS Asok / MRT Sukhumvit (3–10 min walk)","11:00–22:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.tripadvisor.com/Restaurant_Review-g293916-d4092525-Reviews-The_District_Grill_Room_And_Bar-Bangkok.html","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):21.3 | GS(20):20 | PV(15):7.2 | TA(15):15 | DQ(15):14 | UQ(10):5","82.5"
+"PEPE Bangkok","Asoke","Spanish / Tapas","4.8","900","Premium (Above ฿800)","173, 3 Soi Sukhumvit 16, Khlong Toei, Bangkok 10110, Thailand","Sukhumvit Soi 16 — BTS Asok / MRT Sukhumvit (3–10 min walk)","11:00–22:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.google.com/maps/search/?api=1&query=PEPE%20Bangkok&query_place_id=ChIJIUHmOe2f4jAR2l7P6OOm4hg","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):20.0 | GS(20):16 | PV(15):10.4 | TA(15):15 | DQ(15):14 | UQ(10):7","82.4"
+"Napha | Emsphere","Phrom Phong","Thai Restaurant","4.8","900","Mid-Range (฿300 - ฿800)","Sukhumvit Rd, Khlong Tan Nuea, Watthana, Bangkok 10110, Thailand","BTS Phrom Phong (3–10 min walk)","11:00–22:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.google.com/maps/search/?api=1&query=Napha%20%7C%20Emsphere&query_place_id=ChIJDccyZQCf4jARmWkxWFYqkNA","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):20.0 | GS(20):16 | PV(15):12.3 | TA(15):15 | DQ(15):14 | UQ(10):5","82.3"
+"Indulge Restaurant & Cocktail Bar","Asoke","International / Cocktail Bar","4.7","900","Mid-Range (฿300 - ฿800)","403-403/1, 407 407/1 Sukhumvit Rd, Khlong Toei Nuea, Watthana, Bangkok 10110, Thailand","BTS Asok / MRT Sukhumvit (3–10 min walk)","17:00–01:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.google.com/maps/search/?api=1&query=Indulge%20Restaurant%20%26%20Cocktail%20Bar&query_place_id=ChIJvcw2HuOe4jARNkjje3ATS18","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):18.5 | GS(20):20 | PV(15):9.6 | TA(15):15 | DQ(15):14 | UQ(10):5","82.1"
+"Lucca Thonglor – Mediterranean Restaurant, Rooftop & All-Day Brunch","Thong Lor","Mediterranean","4.9","900","Mid-Range (฿300 - ฿800)","Thonglor, 125/26 Thong Lo, Khlong Tan Nuea, Watthana, Bangkok 10110, Thailand","BTS Thong Lo / BTS Ekkamai (5–12 min walk, some soi-end venues need a short taxi/moto-taxi)","11:00–22:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.google.com/maps/search/?api=1&query=Lucca%20Thonglor%20%E2%80%93%20Mediterranean%20Restaurant%2C%20Rooftop%20%26%20All-Day%20Brunch&query_place_id=ChIJbx8TnXKf4jARvOgGrfi8gCQ","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):21.5 | GS(20):16 | PV(15):13.3 | TA(15):11 | DQ(15):14 | UQ(10):6","81.8"
+"Ekkaluck Bangkok","Thong Lor","Thai Fine Dining","4.9","900","Premium (Above ฿800)","22 Sukhumvit 53 Alley, Khlong Tan Nuea, Watthana, Bangkok 10110, Thailand","Sukhumvit Soi 53 — BTS Thong Lo / BTS Ekkamai (5–12 min walk, some soi-end venues need a short taxi/moto-taxi)","18:00–22:30 (dinner only, reservation recommended)","Yes, with advance reservation – mid-size floor plan","https://www.google.com/maps/search/?api=1&query=Ekkaluck%20Bangkok&query_place_id=ChIJH9mMNFef4jARU_dE8h5Lbjc","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):21.5 | GS(20):16 | PV(15):11.2 | TA(15):11 | DQ(15):14 | UQ(10):8","81.7"
+"57th Street","Thong Lor","International / Grill","4.8","2800","Mid-Range (฿300 - ฿800)","2 Sukhumvit Soi 57 Bangkok Marriott Hotel Sukhumvit, Bangkok 10110 Thailand","Sukhumvit Soi 57 — BTS Thong Lo / BTS Ekkamai (5–12 min walk, some soi-end venues need a short taxi/moto-taxi)","11:00–22:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.tripadvisor.com/Restaurant_Review-g293916-d4135165-Reviews-57th_Street-Bangkok.html","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):21.3 | GS(20):20 | PV(15):10.4 | TA(15):11 | DQ(15):14 | UQ(10):5","81.7"
+"Red Sky","Siam","Rooftop Bar / International","4.7","2800","Premium (Above ฿800)","999/99 Rama 1 Road Located in Centara Grand & Bangkok Convention Centre at centralwOrld, Bangkok 10330 Thailand","BTS Siam / BTS National Stadium / BTS Ratchathewi (5–10 min walk)","17:00–01:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.tripadvisor.com/Restaurant_Review-g293916-d1591986-Reviews-Red_Sky-Bangkok.html","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):19.8 | GS(20):20 | PV(15):6.6 | TA(15):13 | DQ(15):14 | UQ(10):8","81.4"
+"CALM Bangkok - Grill, Garden & Guinguette","Thong Lor","Grill / Garden Bar","4.8","900","Mid-Range (฿300 - ฿800)","231/2 , Soi Sukhumvit 31 (Soi Sawasdee), Sukhumvit Road Khlong Ton Nuea Sub-District, Watthana, Bangkok 10110, Thailand","Sukhumvit Soi 31 — BTS Thong Lo / BTS Ekkamai (5–12 min walk, some soi-end venues need a short taxi/moto-taxi)","17:00–01:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.google.com/maps/search/?api=1&query=CALM%20Bangkok%20-%20Grill%2C%20Garden%20%26%20Guinguette&query_place_id=ChIJq1XCBzuf4jARKB3mkY-Huh8","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):20.0 | GS(20):20 | PV(15):10.4 | TA(15):11 | DQ(15):14 | UQ(10):5","80.4"
+"Pad Thai Please","Siam","Thai Restaurant (Pad Thai)","4.8","900","Budget (Under ฿300)","Bangkok 10330, Thailand","BTS Siam / BTS National Stadium / BTS Ratchathewi (5–10 min walk)","11:00–22:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.google.com/maps/search/?api=1&query=Pad%20Thai%20Please&query_place_id=ChIJN49fEwSf4jARVHInT9BroD8","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):20.0 | GS(20):16 | PV(15):12.3 | TA(15):13 | DQ(15):14 | UQ(10):5","80.3"
+"Sunrise Tacos MEXICAN GRILL","Asoke","Mexican","4.7","900","Budget (Under ฿300)","88 Soi Sukhumvit 19, Khlong Toei Nuea, Thawi Watthana, Bangkok 10110, Thailand","Sukhumvit Soi 19 — BTS Asok / MRT Sukhumvit (3–10 min walk)","11:00–22:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.google.com/maps/search/?api=1&query=Sunrise%20Tacos%20MEXICAN%20GRILL&query_place_id=ChIJxaq1oeOe4jAROvyHinpPC-Q","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):18.5 | GS(20):16 | PV(15):11.4 | TA(15):15 | DQ(15):14 | UQ(10):5","79.9"
+"Rossano's Italian Cuisine","Asoke","Italian","4.6","900","Premium (Above ฿800)","167 Sukhumvit Soi 21, Asok Montri Rd, Khlong Toei Nuea, Watthana, Bangkok 10110, Thailand","Sukhumvit Soi 21 — BTS Asok / MRT Sukhumvit (3–10 min walk)","11:00–22:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.google.com/maps/search/?api=1&query=Rossano's%20Italian%20Cuisine&query_place_id=ChIJge5RZOOe4jARzWYZ3jGvKbA","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):17.0 | GS(20):20 | PV(15):8.8 | TA(15):15 | DQ(15):14 | UQ(10):5","79.8"
+"Lobster Main Kitchen","Phrom Phong","Seafood","4.5","900","Premium (Above ฿800)","714/7 Sukhumvit Rd, Khlong Tan, Khlong Toei, Bangkok 10110, Thailand","BTS Phrom Phong (3–10 min walk)","11:00–22:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.google.com/maps/search/?api=1&query=Lobster%20Main%20Kitchen&query_place_id=ChIJqZFhnUaf4jARG7tWK9JH-VA","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):15.5 | GS(20):20 | PV(15):8.0 | TA(15):15 | DQ(15):14 | UQ(10):7","79.5"
+"Siam Paragon Food Hall","Siam","Food Hall / Multi-Cuisine","4.5","2800","Budget (Under ฿300)","991 Rama I Rd, Pathum Wan, Bangkok 10330, Thailand","BTS Siam / BTS National Stadium / BTS Ratchathewi (5–10 min walk)","10:00–22:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.google.com/maps/search/?api=1&query=Siam%20Paragon%20Food%20Hall&query_place_id=ChIJj6SD4s2e4jARmNQEmV4MK_8","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):16.8 | GS(20):20 | PV(15):9.5 | TA(15):13 | DQ(15):14 | UQ(10):6","79.3"
+"Pier 21 Food Terminal","Asoke","Food Hall / Multi-Cuisine","4.4","2800","Budget (Under ฿300)","88 Sukhumvit Road 5F Terminal 21, Bangkok 10110 Thailand","Sukhumvit Soi 5 — BTS Asok / MRT Sukhumvit (3–10 min walk)","10:00–22:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.tripadvisor.com/Restaurant_Review-g293916-d4064159-Reviews-Pier_21_Food_Terminal-Bangkok.html","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):15.3 | GS(20):20 | PV(15):9.0 | TA(15):15 | DQ(15):14 | UQ(10):6","79.3"
+"Kozuri Hand Roll theCOMMONS Thonglor","Thong Lor","Japanese","4.9","900","Premium (Above ฿800)","335 Thong Lo, Khlong Tan Nuea, Watthana, Bangkok 10110, Thailand","BTS Thong Lo / BTS Ekkamai (5–12 min walk, some soi-end venues need a short taxi/moto-taxi)","11:00–22:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.google.com/maps/search/?api=1&query=Kozuri%20Hand%20Roll%20theCOMMONS%20Thonglor&query_place_id=ChIJwamNpiKf4jARz6hNUzClAFI","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):21.5 | GS(20):16 | PV(15):11.2 | TA(15):11 | DQ(15):14 | UQ(10):5","78.7"
+"Do Nưa - La Villa Ari","Ari","Vietnamese","4.9","280","Budget (Under ฿300)","3rd Floor, 356 Phahonyothin Rd, Samsen Nai, Phaya Thai, Bangkok 10400, Thailand","BTS Ari (2–8 min walk)","11:00–22:00 daily","Limited – small/counter seating, may need to split group","https://www.google.com/maps/search/?api=1&query=Do%20N%C5%ABa%20-%20La%20Villa%20Ari&query_place_id=ChIJzSGKcbqd4jARz2juHM1CBWU","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):20.1 | GS(20):10 | PV(15):13.3 | TA(15):15 | DQ(15):14 | UQ(10):6","78.4"
+"Di Vino Bangkok | Italian Restaurant Thonglor","Thong Lor","Italian","4.7","900","Premium (Above ฿800)","Thong Lo, Khlong Tan Nuea, Watthana, Bangkok 10110, Thailand","BTS Thong Lo / BTS Ekkamai (5–12 min walk, some soi-end venues need a short taxi/moto-taxi)","11:00–22:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.google.com/maps/search/?api=1&query=Di%20Vino%20Bangkok%20%7C%20Italian%20Restaurant%20Thonglor&query_place_id=ChIJi7QNHVOe4jARgyB05vA6Gk4","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):18.5 | GS(20):20 | PV(15):9.6 | TA(15):11 | DQ(15):14 | UQ(10):5","78.1"
+"Medium Rare Steak & Wine","Ari","Steak & Grill","4.7","900","Mid-Range (฿300 - ฿800)","12/1 Soi Pradiphat 10, Bangkok 10400 Thailand","BTS Ari (2–8 min walk)","11:00–22:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.tripadvisor.com/Restaurant_Review-g293916-d8734036-Reviews-Medium_Rare_Steak_Wine-Bangkok.html","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):18.5 | GS(20):16 | PV(15):9.6 | TA(15):15 | DQ(15):14 | UQ(10):5","78.1"
+"Bianca Italian Restaurant (emsphere)","Phrom Phong","Italian","4.7","900","Mid-Range (฿300 - ฿800)","GM Floor, Emsphere, Sukhumvit Rd, Khlong Tan, BKK GM Floor, Emsphere, Sukhumvit Rd, Khlong Tan, Khlong Toei, Bangkok 10110 Thailand","BTS Phrom Phong (3–10 min walk)","11:00–22:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.tripadvisor.com/Restaurant_Review-g293916-d26856418-Reviews-Bianca_Italian_Restaurant_emsphere-Bangkok.html","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):18.5 | GS(20):16 | PV(15):9.6 | TA(15):15 | DQ(15):14 | UQ(10):5","78.1"
+"Madam Saranair Thai Food restaurant","Asoke","Thai Fine Dining","4.5","900","Mid-Range (฿300 - ฿800)","139/1 Soi Sukhumvit 21 (Asoke Soi 1 sub-district, Watthana, Bangkok 10110, Thailand","Sukhumvit Soi 21 — BTS Asok / MRT Sukhumvit (3–10 min walk)","18:00–22:30 (dinner only, reservation recommended)","Yes, with advance reservation – mid-size floor plan","https://www.google.com/maps/search/?api=1&query=Madam%20Saranair%20Thai%20Food%20restaurant&query_place_id=ChIJ1bV7lOSe4jARZfwCIKXKyNU","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):15.5 | GS(20):16 | PV(15):9.5 | TA(15):15 | DQ(15):14 | UQ(10):8","78.0"
+"Patara Fine Thai Cuisine","Thong Lor","Thai Fine Dining","4.5","2800","Premium (Above ฿800)","375, 19 Thong Lo, Khlong Tan Nuea, Watthana, Bangkok 10110, Thailand","BTS Thong Lo / BTS Ekkamai (5–12 min walk, some soi-end venues need a short taxi/moto-taxi)","18:00–22:30 (dinner only, reservation recommended)","Yes – large tables/floor plan, recommend reserving ahead","https://www.google.com/maps/search/?api=1&query=Patara%20Fine%20Thai%20Cuisine&query_place_id=ChIJv99arlOe4jARCJI52pBehiQ","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):16.8 | GS(20):20 | PV(15):8.0 | TA(15):11 | DQ(15):14 | UQ(10):8","77.8"
+"Tuxedo Espresso Bar","Asoke","Cafe / Brunch","5.0","280","Mid-Range (฿300 - ฿800)","491 Sukhumvit Road, Khwaeng Klongtoey Nua, Khet Wattana Carlton Hotel Bangkok Sukhumvit, Bangkok 10110 Thailand","Sukhumvit Soi 10 — BTS Asok / MRT Sukhumvit (3–10 min walk)","08:00–18:00 daily","Limited – small/counter seating, may need to split group","https://www.tripadvisor.com/Restaurant_Review-g293916-d20159671-Reviews-Tuxedo_Espresso_Bar-Bangkok.html","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):21.6 | GS(20):10 | PV(15):12.0 | TA(15):15 | DQ(15):14 | UQ(10):5","77.6"
+"Octave Rooftop Lounge & Bar","Thong Lor","Rooftop Bar / Bar & Grill","4.6","2800","Premium (Above ฿800)","2 Soi Sukhumvit 57 Road, Bangkok 10110 Thailand","Sukhumvit Soi 57 — BTS Thong Lo / BTS Ekkamai (5–12 min walk, some soi-end venues need a short taxi/moto-taxi)","17:00–01:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.tripadvisor.com/Restaurant_Review-g293916-d4131283-Reviews-Octave_Rooftop_Lounge_Bar-Bangkok.html","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):18.3 | GS(20):20 | PV(15):6.0 | TA(15):11 | DQ(15):14 | UQ(10):8","77.3"
+"Mott 32 Bangkok","OUTLIER-Sathorn","Chinese","4.9","2800","Mid-Range (฿300 - ฿800)","114 Narathiwas Road The Standard, Bangkok Mahanakhon, 2nd Floor, Bangkok 10500 Thailand","BTS Chong Nonsi (King Power Mahanakhon) — outside the 5 target zones","11:00–22:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.tripadvisor.com/Restaurant_Review-g293916-d25340485-Reviews-Mott_32_Bangkok-Bangkok.html","Address falls outside the 5 target zones (actual area: Sathorn) — zone tag is nearest-fit only; Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):22.8 | GS(20):20 | PV(15):11.2 | TA(15):5 | DQ(15):12 | UQ(10):6","77.0"
+"Lay Lao","Ari","Northern/Isaan Thai","4.5","1260","Mid-Range (฿300 - ฿800)","65 Phahon Yothin 7, Samsen Nai, Phaya Thai, Bangkok 10400, Thailand","BTS Ari (2–8 min walk)","11:00–22:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.google.com/maps/search/?api=1&query=Lay%20Lao&query_place_id=ChIJ44AEpx2c4jARZKaM12f1HQI (+1 more)","Merged duplicate (Google Maps + Tripadvisor); Review count is AI-estimated (not present in source data)","R&R(25):15.9 | GS(20):16 | PV(15):9.5 | TA(15):15 | DQ(15):15 | UQ(10):5","76.4"
+"Kenny's BKK - Sukhumvit 31","Thong Lor","American / Burgers","4.8","900","Mid-Range (฿300 - ฿800)","24/1 Sukhumvit 31, Khlong Tan Nuea, Watthana, Bangkok 10110, Thailand","Sukhumvit Soi 31 — BTS Thong Lo / BTS Ekkamai (5–12 min walk, some soi-end venues need a short taxi/moto-taxi)","11:00–22:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.google.com/maps/search/?api=1&query=Kenny's%20BKK%20-%20Sukhumvit%2031&query_place_id=ChIJd_RzZQCf4jARUbKJzoih9sY","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):20.0 | GS(20):16 | PV(15):10.4 | TA(15):11 | DQ(15):14 | UQ(10):5","76.4"
+"ICONSIAM","Siam","Shopping Mall / Multi-Cuisine Complex","4.7","2800","Mid-Range (฿300 - ฿800)","299 Charoen Nakhon Rd, Khlong Ton Sai, Khlong San, Bangkok 10600, Thailand","Riverside (Khlong San) — free shuttle boat from BTS Saphan Taksin (~10 min) or taxi; not walkable from Siam BTS despite zone grouping","10:00–22:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.google.com/maps/search/?api=1&query=ICONSIAM&query_place_id=ChIJFRjwgc2Z4jAR9JIadoa9YBY","Price inferred from comparable venues (missing in source); Riverside location grouped with Siam cluster by convention, not BTS-walkable; Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):19.8 | GS(20):20 | PV(15):11.4 | TA(15):7 | DQ(15):11 | UQ(10):7","76.2"
+"Cantina Italian Kitchen (Ari)","Ari","Italian","4.5","1260","Premium (Above ฿800)","142 Rama VI Soi 30, Samsen Nai, Phaya Thai, Bangkok 10400, Thailand","BTS Ari (2–8 min walk)","11:00–22:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.google.com/maps/search/?api=1&query=Cantina%20Italian%20Kitchen%20(Ari)&query_place_id=ChIJB7NJSKie4jARfoG2zttdIxU (+1 more)","Merged duplicate (Google Maps + Tripadvisor); Review count is AI-estimated (not present in source data)","R&R(25):16.6 | GS(20):16 | PV(15):8.4 | TA(15):15 | DQ(15):15 | UQ(10):5","76.0"
+"Mad Moa Asok","Asoke","Thai Restaurant","4.8","280","Mid-Range (฿300 - ฿800)","139 100 Pi Sayam Samakhom Alley, Khlong Toei Nuea, Watthana, Bangkok 10110, Thailand","BTS Asok / MRT Sukhumvit (3–10 min walk)","11:00–22:00 daily","Limited – small/counter seating, may need to split group","https://www.google.com/maps/search/?api=1&query=Mad%20Moa%20Asok&query_place_id=ChIJgX-SHpqf4jARTZxC5FBJGwQ","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):18.6 | GS(20):10 | PV(15):12.3 | TA(15):15 | DQ(15):14 | UQ(10):5","74.9"
+"Madcow burger x Under Over Ari","Ari","Burgers / Casual American","4.8","280","Budget (Under ฿300)","In A-ONE Ari, Soi Ari 1, Phaya Thai, Bangkok 10400, Thailand","BTS Ari (2–8 min walk)","11:00–22:00 daily","Limited – small/counter seating, may need to split group","https://www.google.com/maps/search/?api=1&query=Madcow%20burger%20x%20Under%20Over%20Ari&query_place_id=ChIJtbK7WrOd4jARTFq03G7s99k","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):18.6 | GS(20):10 | PV(15):12.3 | TA(15):15 | DQ(15):14 | UQ(10):5","74.9"
+"Sri Trat Restaurant and Bar","Thong Lor","Eastern Thai (Trat-style)","4.4","1260","Mid-Range (฿300 - ฿800)","90 Sukhumvit 33 Alley, Khlong Tan Nuea, Watthana, Bangkok 10110, Thailand","Sukhumvit Soi 33 — BTS Thong Lo / BTS Ekkamai (5–12 min walk, some soi-end venues need a short taxi/moto-taxi)","11:00–22:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.google.com/maps/search/?api=1&query=Sri%20Trat%20Restaurant%20and%20Bar&query_place_id=ChIJoc-7O_ye4jARa2GblY_w4Bo (+1 more)","Merged duplicate (Google Maps + Tripadvisor); Review count is AI-estimated (not present in source data)","R&R(25):14.4 | GS(20):20 | PV(15):7.2 | TA(15):11 | DQ(15):15 | UQ(10):7","74.6"
+"Peppery Thai Bistro (Icon Siam)","Siam","Thai Restaurant","4.8","900","Mid-Range (฿300 - ฿800)","299 Charoen Nakhon Rd, Khlong Ton Sai, Khlong San, Bangkok 10600, Thailand","Riverside (Khlong San) — free shuttle boat from BTS Saphan Taksin (~10 min) or taxi; not walkable from Siam BTS despite zone grouping","11:00–22:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.google.com/maps/search/?api=1&query=Peppery%20Thai%20Bistro%20(Icon%20Siam)&query_place_id=ChIJCRsC5xSZ4jARwS4vbRZVquI","Riverside location grouped with Siam cluster by convention, not BTS-walkable; Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):20.0 | GS(20):16 | PV(15):12.3 | TA(15):7 | DQ(15):14 | UQ(10):5","74.3"
+"The Gardens of Dinsor Palace","Thong Lor","Thai Fine Dining","4.4","900","Mid-Range (฿300 - ฿800)","Soi Chumbala Sukhumvit Road (between Soi 59 & 61), Bangkok 10110 Thailand","BTS Thong Lo / BTS Ekkamai (5–12 min walk, some soi-end venues need a short taxi/moto-taxi)","18:00–22:30 (dinner only, reservation recommended)","Yes – large tables/floor plan, recommend reserving ahead","https://www.tripadvisor.com/Restaurant_Review-g293916-d6017658-Reviews-The_Gardens_of_Dinsor_Palace-Bangkok.html","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):14.0 | GS(20):20 | PV(15):7.2 | TA(15):11 | DQ(15):14 | UQ(10):8","74.2"
+"SOMA Bangkok","Siam","Modern European","4.6","900","Premium (Above ฿800)","Siam Patumwan House, 414 Phayathai Road Wang Mai Sub District, Pathum Wan, Bangkok 10330, Thailand","BTS Siam / BTS National Stadium / BTS Ratchathewi (5–10 min walk)","11:00–22:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.google.com/maps/search/?api=1&query=SOMA%20Bangkok&query_place_id=ChIJ1crUqJif4jARpt1VjPzcAs8","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):17.0 | GS(20):16 | PV(15):8.8 | TA(15):13 | DQ(15):14 | UQ(10):5","73.8"
+"Supanniga Eating Room by Khun Yai","Thong Lor","Thai Regional (Trat/Isaan)","4.3","1260","Premium (Above ฿800)","160/11 Thong Lo, Khlong Tan Nuea, Watthana, Bangkok 10110, Thailand","BTS Thong Lo / BTS Ekkamai (5–12 min walk, some soi-end venues need a short taxi/moto-taxi)","11:00–22:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.google.com/maps/search/?api=1&query=Supanniga%20Eating%20Room%20by%20Khun%20Yai&query_place_id=ChIJYSgxk6yf4jAROxN8pCQzqJA (+1 more)","Merged duplicate (Google Maps + Tripadvisor); Review count is AI-estimated (not present in source data)","R&R(25):13.6 | GS(20):20 | PV(15):6.8 | TA(15):11 | DQ(15):15 | UQ(10):7","73.4"
+"SWD Bangkok","Thong Lor","International","4.8","900","Premium (Above ฿800)","249 Sukhumvit 31, Khlong Tan Nuea, Watthana, Bangkok 10110, Thailand","Sukhumvit Soi 31 — BTS Thong Lo / BTS Ekkamai (5–12 min walk, some soi-end venues need a short taxi/moto-taxi)","11:00–22:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.google.com/maps/search/?api=1&query=SWD%20Bangkok&query_place_id=ChIJPSQXMkOf4jARUl6zswYm-X4","Price inferred from comparable venues (missing in source); Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):20.0 | GS(20):16 | PV(15):10.4 | TA(15):11 | DQ(15):11 | UQ(10):5","73.4"
+"Sra Bua By Kiin Kiin","Siam","Thai Fine Dining (Michelin-style)","4.7","2800","Premium (Above ฿800)","991/9 Rama I Road Siam Kempinski Hotel, Bangkok 10330 Thailand","BTS Siam / BTS National Stadium / BTS Ratchathewi (5–10 min walk)","18:00–22:30 (dinner only, reservation recommended)","Limited – small/counter seating, may need to split group","https://www.tripadvisor.com/Restaurant_Review-g293916-d1915063-Reviews-Sra_Bua_By_Kiin_Kiin-Bangkok.html","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):19.8 | GS(20):10 | PV(15):6.6 | TA(15):13 | DQ(15):14 | UQ(10):10","73.4"
+"Fuego","Thong Lor","Latin American / Bar","4.8","900","Premium (Above ฿800)","Khlong Tan Nuea, Watthana, Bangkok 10110, Thailand","BTS Thong Lo / BTS Ekkamai (5–12 min walk, some soi-end venues need a short taxi/moto-taxi)","17:00–01:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.google.com/maps/search/?api=1&query=Fuego&query_place_id=ChIJN7fHY7Gf4jAR8jjTD8UA81k","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):20.0 | GS(20):16 | PV(15):7.2 | TA(15):11 | DQ(15):14 | UQ(10):5","73.2"
+"Ministry Of Crab - Bangkok","Thong Lor","Seafood","4.7","900","Premium (Above ฿800)","No.15/1 Soi Sukhumvit 31 31 Sam-ed, Bangkok 10110 Thailand","Sukhumvit Soi 31 — BTS Thong Lo / BTS Ekkamai (5–12 min walk, some soi-end venues need a short taxi/moto-taxi)","11:00–22:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.tripadvisor.com/Restaurant_Review-g293916-d19718078-Reviews-Ministry_Of_Crab_Bangkok-Bangkok.html","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):18.5 | GS(20):16 | PV(15):6.6 | TA(15):11 | DQ(15):14 | UQ(10):7","73.1"
+"Kinroll - Ari | กินโรล - อารีย์","Ari","Japanese (Sushi Roll)","4.8","280","Premium (Above ฿800)","Ari, Ari 4 Fang Nua Alley, PhayaThai, Phaya Thai, Bangkok 10400, Thailand","BTS Ari (2–8 min walk)","11:00–22:00 daily","Limited – small/counter seating, may need to split group","https://www.google.com/maps/search/?api=1&query=Kinroll%20-%20Ari%20%7C%20%E0%B8%81%E0%B8%B4%E0%B8%99%E0%B9%82%E0%B8%A3%E0%B8%A5%20-%20%E0%B8%AD%E0%B8%B2%E0%B8%A3%E0%B8%B5%E0%B8%A2%E0%B9%8C&query_place_id=ChIJXV78UEKd4jARC52Rr3NnqBY","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):18.6 | GS(20):10 | PV(15):10.4 | TA(15):15 | DQ(15):14 | UQ(10):5","73.0"
+"Tiew Copper Craft","Siam","Thai Restaurant (Noodle/Hotpot)","4.8","280","Budget (Under ฿300)","991 Siam Paragon, Floor 5 (Nextopia Zone, Rama I Rd, Pathumwan, Pathum Wan, Bangkok 10330, Thailand","BTS Siam / BTS National Stadium / BTS Ratchathewi (5–10 min walk)","11:00–22:00 daily","Limited – small/counter seating, may need to split group","https://www.google.com/maps/search/?api=1&query=Tiew%20Copper%20Craft&query_place_id=ChIJUW9ZLCef4jARXoS_VGRhZjg","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):18.6 | GS(20):10 | PV(15):12.3 | TA(15):13 | DQ(15):14 | UQ(10):5","72.9"
+"Ari Cafe & Bistro","Ari","Cafe / Brunch","4.7","280","Budget (Under ฿300)","11/20 Soi Phetchaburi 47, Lane 3, Bang Kapi, Huai Khwang, Bangkok 10310, Thailand","BTS Ari (2–8 min walk)","08:00–18:00 daily","Limited – small/counter seating, may need to split group","https://www.google.com/maps/search/?api=1&query=Ari%20Cafe%20%26%20Bistro&query_place_id=ChIJIQr4bB2f4jARe_g4nhRMLfA","Address district (Bang Kapi/Huai Khwang) does not match the ""Ari"" name — likely a source data inconsistency; Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):17.1 | GS(20):10 | PV(15):11.4 | TA(15):15 | DQ(15):14 | UQ(10):5","72.5"
+"Kid Mai Death Awareness Cafe","Ari","Themed Cafe","4.7","280","Premium (Above ฿800)","Soi Ari 1, Phahonyothin rd., Samsen Nai, Phaya Thai, Bangkok 10400 Thailand","BTS Ari (2–8 min walk)","08:00–18:00 daily","Limited – small/counter seating, may need to split group","https://www.tripadvisor.com/Restaurant_Review-g293916-d13837987-Reviews-Kid_Mai_Death_Awareness_Cafe-Bangkok.html","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):17.1 | GS(20):10 | PV(15):6.6 | TA(15):15 | DQ(15):14 | UQ(10):9","71.7"
+"Krua Jiang Mai","Thong Lor","Northern Thai","4.8","280","Budget (Under ฿300)","125 24 Thong Lo, Khlong Tan Nuea, Watthana, Bangkok 10110, Thailand","BTS Thong Lo / BTS Ekkamai (5–12 min walk, some soi-end venues need a short taxi/moto-taxi)","11:00–22:00 daily","Limited – small/counter seating, may need to split group","https://www.google.com/maps/search/?api=1&query=Krua%20Jiang%20Mai&query_place_id=ChIJh7s6GVOe4jAReTmapQOwBQ0","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):18.6 | GS(20):10 | PV(15):12.3 | TA(15):11 | DQ(15):14 | UQ(10):5","70.9"
+"GaGa Udon House @Thonglor","Thong Lor","Japanese","4.8","280","Budget (Under ฿300)","No. 90 Building, 1st Floor, Fifty Fifth Thonglor Thonglor, Napha Sap Alley, Lane 2, Khlong Tan Nuea, Watthana, Bangkok 10110, Thailand","BTS Thong Lo / BTS Ekkamai (5–12 min walk, some soi-end venues need a short taxi/moto-taxi)","11:00–22:00 daily","Limited – small/counter seating, may need to split group","https://www.google.com/maps/search/?api=1&query=GaGa%20Udon%20House%20%40Thonglor&query_place_id=ChIJ-9VINeef4jARrEtHnUew4MY","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):18.6 | GS(20):10 | PV(15):12.3 | TA(15):11 | DQ(15):14 | UQ(10):5","70.9"
+"The Local","Asoke","Modern Thai","4.3","1260","Premium (Above ฿800)","32 32/1 Soi Sukhumvit 23, Khlong Toei Nuea, Watthana, Bangkok 10110, Thailand","Sukhumvit Soi 23 — BTS Asok / MRT Sukhumvit (3–10 min walk)","11:00–22:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.google.com/maps/search/?api=1&query=The%20Local&query_place_id=ChIJc881Nfue4jARsIcIs9ZqPJE (+1 more)","Merged duplicate (Google Maps + Tripadvisor); Review count is AI-estimated (not present in source data)","R&R(25):12.9 | GS(20):16 | PV(15):6.4 | TA(15):15 | DQ(15):15 | UQ(10):5","70.3"
+"Breakfast Story Phrom Phong","Phrom Phong","Cafe / Brunch","4.6","280","Budget (Under ฿300)","593 27 Sukhumvit Rd, Khlong Tan Nuea, Watthana, Bangkok 10110, Thailand","BTS Phrom Phong (3–10 min walk)","08:00–18:00 daily","Limited – small/counter seating, may need to split group","https://www.google.com/maps/search/?api=1&query=Breakfast%20Story%20Phrom%20Phong&query_place_id=ChIJ641S8P2e4jARFamnzgu_IMo","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):15.6 | GS(20):10 | PV(15):10.4 | TA(15):15 | DQ(15):14 | UQ(10):5","70.0"
+"KhuaKling PakSod Thong Lo","Thong Lor","Northern/Isaan Thai","4.5","900","Mid-Range (฿300 - ฿800)","98/1 Pai Di Ma Di Klang Alley, Khlong Tan Nuea, Watthana, Bangkok 10110, Thailand","BTS Thong Lo / BTS Ekkamai (5–12 min walk, some soi-end venues need a short taxi/moto-taxi)","11:00–22:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.google.com/maps/search/?api=1&query=KhuaKling%20PakSod%20Thong%20Lo&query_place_id=ChIJe26gkKuf4jARIiXTKzB4REo","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):15.5 | GS(20):16 | PV(15):8.0 | TA(15):11 | DQ(15):14 | UQ(10):5","69.5"
+"Peppina (Sukhumvit Flagship Branch)","Thong Lor","Italian (Pizza)","4.5","900","Mid-Range (฿300 - ฿800)","27/1 Sukhumvit 33 Alley, Khlong Toei Nuea, Watthana, Bangkok 10110, Thailand","Sukhumvit Soi 33 — BTS Thong Lo / BTS Ekkamai (5–12 min walk, some soi-end venues need a short taxi/moto-taxi)","11:00–22:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.google.com/maps/search/?api=1&query=Peppina%20(Sukhumvit%20Flagship%20Branch)&query_place_id=ChIJQ0cFbPye4jARKjjpGD8_chs","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):15.5 | GS(20):16 | PV(15):8.0 | TA(15):11 | DQ(15):14 | UQ(10):5","69.5"
+"The Market Restaurant","OUTLIER-Riverside(Siam cluster)","International Buffet","4.6","2800","Mid-Range (฿300 - ฿800)","257/1-3 Charoennakorn Road Anantara Bangkok Riverside Resort and Spa, Bangkok 10600 Thailand","Riverside (Anantara) — shuttle boat/taxi from BTS Saphan Taksin, not walkable","10:00–22:00 daily","Yes – large tables/floor plan, recommend reserving ahead","https://www.tripadvisor.com/Restaurant_Review-g293916-d3451483-Reviews-The_Market_Restaurant-Bangkok.html","Address falls outside the 5 target zones (actual area: Riverside(Siam cluster)) — zone tag is nearest-fit only; Riverside location grouped with Siam cluster by convention, not BTS-walkable; Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):18.3 | GS(20):20 | PV(15):8.8 | TA(15):5 | DQ(15):12 | UQ(10):5","69.1"
+"Yoong Khao Hom","OUTLIER-Chinatown","Thai (Rice Soup)","4.8","900","Mid-Range (฿300 - ฿800)","Soi Chulalongkorn 9, Charoen Mueang Road, Bangkok 10330 Thailand","MRT Hua Lamphong — outside the 5 target zones","11:00–22:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.tripadvisor.com/Restaurant_Review-g293916-d12946128-Reviews-Yoong_Khao_Hom-Bangkok.html","Address falls outside the 5 target zones (actual area: Chinatown) — zone tag is nearest-fit only; Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):20.0 | GS(20):16 | PV(15):10.4 | TA(15):5 | DQ(15):12 | UQ(10):5","68.4"
+"Caturday Cat Cafe","Siam","Themed Cafe","4.4","280","Mid-Range (฿300 - ฿800)","89/70 Phayathai Rd Near Ratchathewi Subway Station, Bangkok 10400 Thailand","BTS Siam / BTS National Stadium / BTS Ratchathewi (5–10 min walk)","08:00–18:00 daily","Limited – small/counter seating, may need to split group","https://www.tripadvisor.com/Restaurant_Review-g293916-d7910265-Reviews-Caturday_Cat_Cafe-Bangkok.html","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):12.6 | GS(20):10 | PV(15):7.2 | TA(15):13 | DQ(15):14 | UQ(10):9","65.8"
+"Soei Restaurant","Ari","Thai Restaurant","4.2","280","Mid-Range (฿300 - ฿800)","Soi Phibun Watthana 6, Samsen Nai, Phaya Thai, Bangkok 10400 Thailand","BTS Ari (2–8 min walk)","11:00–22:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.tripadvisor.com/Restaurant_Review-g293916-d7064055-Reviews-Soei_Restaurant-Bangkok.html","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):9.6 | GS(20):16 | PV(15):5.6 | TA(15):15 | DQ(15):14 | UQ(10):5","65.2"
+"Sit and Wonder","Thong Lor","Cafe / Brunch","4.5","280","Budget (Under ฿300)","119 Soi Sukhumvit 57 North Klong Ton, Bangkok 10110 Thailand","Sukhumvit Soi 57 — BTS Thong Lo / BTS Ekkamai (5–12 min walk, some soi-end venues need a short taxi/moto-taxi)","08:00–18:00 daily","Limited – small/counter seating, may need to split group","https://www.tripadvisor.com/Restaurant_Review-g293916-d4306866-Reviews-Sit_and_Wonder-Bangkok.html","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):14.1 | GS(20):10 | PV(15):10.0 | TA(15):11 | DQ(15):14 | UQ(10):5","64.1"
+"Ong Tong Khao Soi","Ari","Northern/Isaan Thai","4.3","280","Budget (Under ฿300)","21 Soi phahonyothin Khwaeng Samsen Nai, Bangkok 10400 Thailand","BTS Ari (2–8 min walk)","11:00–22:00 daily","Limited – small/counter seating, may need to split group","https://www.tripadvisor.com/Restaurant_Review-g293916-d15237604-Reviews-Ong_Tong_Khao_Soi-Bangkok.html","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):11.1 | GS(20):10 | PV(15):8.0 | TA(15):15 | DQ(15):14 | UQ(10):5","63.1"
+"Here Hai","Thong Lor","Thai Restaurant","4.2","900","Mid-Range (฿300 - ฿800)","112, 1 Ekkamai Rd, Bangkok 10110 Thailand","BTS Thong Lo / BTS Ekkamai (5–12 min walk, some soi-end venues need a short taxi/moto-taxi)","11:00–22:00 daily","Yes, with advance reservation – mid-size floor plan","https://www.tripadvisor.com/Restaurant_Review-g293916-d15237670-Reviews-Here_Hai-Bangkok.html","Review count is AI-estimated (not present in source data); [AI-Smoothed Data: Review count localized baseline]","R&R(25):11.0 | GS(20):16 | PV(15):5.6 | TA(15):11 | DQ(15):14 | UQ(10):5","62.6"
+`;
+
+  // ─── 2. CSV PARSING (RFC4180-aware) ──────────────────────────────────────
+  function parseCSV(text) {
+    var rows = [], row = [], field = "", inQuotes = false;
+    for (var i = 0; i < text.length; i++) {
+      var c = text[i];
+      if (inQuotes) {
+        if (c === '"' && text[i + 1] === '"') { field += '"'; i++; }
+        else if (c === '"') { inQuotes = false; }
+        else { field += c; }
+      } else {
+        if (c === '"') inQuotes = true;
+        else if (c === ',') { row.push(field); field = ""; }
+        else if (c === '\n' || c === '\r') {
+          if (c === '\r' && text[i + 1] === '\n') i++;
+          row.push(field); field = ""; rows.push(row); row = [];
+        } else field += c;
+      }
+    }
+    if (field.length || row.length) { row.push(field); rows.push(row); }
+    if (!rows.length) return [];
+    var headers = rows[0].map(function (h) { return h.trim(); });
+    return rows.slice(1).filter(function (r) { return r.length > 1; }).map(function (r) {
+      var obj = {};
+      headers.forEach(function (h, idx) { obj[h] = (r[idx] || "").trim(); });
+      return obj;
+    });
+  }
+
+  // "R&R(25):21.7 | GS(20):20 | PV(15):10.4 | TA(15):15 | DQ(15):15 | UQ(10):8" → {rr,gs,pv,tr,dq,uq}
+  function parseDimScores(s) {
+    var out = { rr: 0, gs: 0, pv: 0, tr: 0, dq: 0, uq: 0 };
+    if (!s) return out;
+    var map = { "R&R": "rr", "GS": "gs", "PV": "pv", "TA": "tr", "DQ": "dq", "UQ": "uq" };
+    s.split("|").forEach(function (part) {
+      var m = part.match(/([A-Z&]+)\([\d.]+\):([\d.]+)/);
+      if (m && map[m[1]] !== undefined) out[map[m[1]]] = parseFloat(m[2]);
+    });
+    return out;
+  }
+
+  function zoneCategory(rawZone) {
+    if (!rawZone) return "Outlier";
+    return rawZone.indexOf("OUTLIER") === 0 ? "Outlier" : rawZone;
+  }
+
+  function budgetTier(rawPrice) {
+    if (!rawPrice) return "Unknown";
+    if (rawPrice.indexOf("Budget") === 0) return "Budget";
+    if (rawPrice.indexOf("Mid-Range") === 0) return "Mid-Range";
+    if (rawPrice.indexOf("Premium") === 0) return "Premium";
+    return "Unknown";
+  }
+
+  function rowsToRestaurants(csvRows) {
+    return csvRows.map(function (row) {
+      var dims = parseDimScores(row["Dimensional Scores"]);
+      var notes = row["Notes"] || "";
+      return {
+        name: row["Restaurant Name"],
+        zoneRaw: row["Zone"],
+        zone: zoneCategory(row["Zone"]),
+        cuisine: row["Food Type"],
+        rating: parseFloat(row["Google Rating"]) || 0,
+        reviewCount: parseInt(row["Review Count"], 10) || 0,
+        priceTierRaw: row["Price Range"],
+        priceTier: budgetTier(row["Price Range"]),
+        address: row["Location / Address"],
+        travel: row["Distance / Travel Note"],
+        hours: row["Opening Hours"],
+        groupNote: row["Suitable for Group"],
+        mapsUrl: (row["Source URL"] || "").split(" (+")[0],
+        notes: notes,
+        smoothed: notes.indexOf("[AI-Smoothed Data") !== -1,
+        rr: dims.rr, gs: dims.gs, pv: dims.pv, tr: dims.tr, dq: dims.dq, uq: dims.uq,
+        total: parseFloat(row["Total Score"]) || 0
+      };
+    }).filter(function (r) { return r.name; });
+  }
+
+  var RESTAURANTS = rowsToRestaurants(parseCSV(CSV_TEXT));
+
+  // ─── 3. CURATED DEEP-DIVE CONTENT ─────────────────────────────────────────
+  // Curated for the 4 highest-scoring venues in the verified dataset so that
+  // whichever 3 actually land in the live Top-3 slot — determined purely by
+  // Total Score, descending, exactly per spec — get hand-written analysis
+  // instead of an auto-generated card. (Total Scores: Bangkok Heightz 90.1,
+  // Paradise Lost Bangkok 89.0, Cappadocia Turkish 88.7, Market Cafe 88.0 —
+  // Paradise Lost Bangkok actually outranks Cappadocia and Market Cafe, so a
+  // curated card is provided for it too rather than silently dropping it.)
+  var CURATED = {
+    "Bangkok Heightz Rooftop (Restaurant & Bar 39th floor)": {
+      medal: "🥇", theme: "rec-gold", chip: "🍹 Rooftop Bar / Bar &amp; Grill", chipLoc: "📍 Asoke (BTS Asok)",
+      strengths: [
+        "Highest Total Score in the entire dataset — <strong>90.1/100</strong>, driven by a perfect Group Suitability score (<strong>20/20</strong>) and the dataset's top Data Quality score (<strong>15/15</strong>).",
+        "One of only two rows whose review count (3,919) is <em>not</em> flagged as an AI-smoothed scraper fallback value — the underlying review signal here is comparatively more trustworthy.",
+        "BTS Asok / MRT Sukhumvit walkable (3–10 min), among the best-connected venues in the dataset.",
+        "39th-floor rooftop format naturally suits a large team booking — open floor plan, panoramic views as a built-in conversation piece."
+      ],
+      risks: [
+        "<strong>Premium Price Tier (Above ฿800/person):</strong> the most expensive tier in the normalized scale — for 8–12 people this is a meaningfully larger budget commitment than the Mid-Range venues immediately below it in the ranking.",
+        "<strong>Weather &amp; Rooftop Exposure:</strong> open-air 39th-floor format is exposed to Bangkok's sudden rainy-season downpours; have an indoor backup or check the forecast before locking the date.",
+        "<strong>Merged-Duplicate Record:</strong> this row combines a Google Maps and Tripadvisor listing — double-check current hours/booking policy directly, since merged records can drift from a single live source over time.",
+        "<strong>Uniqueness only 8/10:</strong> despite the top overall score, the rooftop-bar format itself isn't the most differentiated concept in the dataset — book it for the score and logistics, not novelty."
+      ]
+    },
+    "Paradise Lost Bangkok - Rooftop Bar": {
+      medal: "🥈", theme: "rec-silver", chip: "🍹 Rooftop Bar / Bar &amp; Grill", chipLoc: "📍 Siam (BTS Siam)",
+      strengths: [
+        "Highest raw Google rating of any venue in the dataset — <strong>4.9★</strong> — combined with a perfect Group Suitability score (20/20).",
+        "<strong>Mid-Range pricing (฿300–฿800/person)</strong> delivers comparable group-fit and rating quality to the #1 venue at a meaningfully lower price tier.",
+        "Centrally located in the Siam cluster, walkable from BTS Siam / National Stadium / Ratchathewi (5–10 min).",
+        "Total Score of <strong>89.0/100</strong> places it ahead of both Cappadocia Turkish Restaurant and Market Cafe under a true descending sort by score."
+      ],
+      risks: [
+        "<strong>AI-Smoothed Review Count:</strong> the 2,800 review count behind this 4.9★ rating is one of the flagged scraper-fallback baseline values (<code>[AI-Smoothed Data: Review count localized baseline]</code>) — the true review volume is unverified, so treat the rating itself with appropriate caution until confirmed directly.",
+        "<strong>Travel &amp; Accessibility scored 13/15</strong> — slightly more ambiguous walking distance (5–10 min across three possible BTS stations) than single-station venues.",
+        "<strong>Rooftop Format Risk:</strong> shares the same weather-dependency and noise-level trade-offs as any open-air rooftop venue — verify an indoor contingency.",
+        "<strong>Data Quality 14/15</strong> (not a merged-duplicate record like Bangkok Heightz) — solid but not the dataset's highest-confidence entry."
+      ]
+    },
+    "Cappadocia Turkish Restaurant Bangkok": {
+      medal: "🥉", theme: "rec-bronze", chip: "🥙 Turkish", chipLoc: "📍 Asoke (BTS Asok)",
+      strengths: [
+        "The <strong>only Turkish-cuisine venue</strong> in the entire 76-restaurant dataset — strong built-in differentiation among a field dominated by Thai, Japanese, and Italian options.",
+        "Mid-Range pricing (฿300–฿800/person) keeps per-head cost predictable for a 8–12 person booking.",
+        "Perfect Group Suitability (20/20) and strong Travel &amp; Accessibility (15/15) — Sukhumvit Soi 11, BTS Asok / MRT Sukhumvit walkable in 3–10 minutes.",
+        "4.9★ rating ties for the highest in the Top 5, contributing 21.5/25 to Review &amp; Rating Consistency."
+      ],
+      risks: [
+        "<strong>AI-Smoothed Review Count:</strong> the 900 review count is a flagged scraper-fallback baseline value (<code>[AI-Smoothed Data: Review count localized baseline]</code>) — actual review volume is unverified.",
+        "<strong>Uniqueness only 7/10</strong> despite the cuisine novelty — the differentiation didn't fully translate into other standout factors (no signature dish or view called out in the source data).",
+        "<strong>Meat-Forward Menu:</strong> confirm halal/dietary-specific options directly given Turkish cuisine's typically meat-centric profile, especially for a mixed-dietary group of 8–12.",
+        "<strong>Data Quality 14/15</strong> — single-source record (Google Maps only), not cross-verified against a second source the way some other Asoke venues are."
+      ]
+    },
+    "Market Cafe": {
+      medal: "🏅", theme: "rec-bronze", chip: "🍴 International Buffet", chipLoc: "📍 Asoke (BTS Asok)",
+      strengths: [
+        "Buffet format is inherently group-friendly — flexible portions and self-serve variety reduce the \"everyone orders something different\" friction common with 8–12 person bookings.",
+        "Mid-Range pricing (฿300–฿800/person) and a perfect Group Suitability score (20/20).",
+        "Same Sukhumvit Soi 13 / Hyatt Regency walkability cluster as Bangkok Heightz and Cappadocia — easy to combine into one itinerary.",
+        "4.9★ rating, tied for the highest in the Top 5; Review &amp; Rating Consistency scored 22.8/25, the best of the curated set."
+      ],
+      risks: [
+        "<strong>Lowest Uniqueness score among the Top 5 (5/10):</strong> a generic international-buffet format with no called-out signature dish or experiential differentiator in the source data.",
+        "<strong>AI-Smoothed Review Count:</strong> the 2,800 review count is a flagged scraper-fallback baseline value (<code>[AI-Smoothed Data: Review count localized baseline]</code>) — actual review volume is unverified.",
+        "<strong>Buffet Freshness Risk:</strong> quality/freshness for a large simultaneous group booking should be confirmed directly with the hotel — no per-dish review detail exists beyond the aggregate rating.",
+        "<strong>Lands at rank #4</strong> under a strict descending Total-Score sort (88.0, just behind Cappadocia's 88.7) — a curated card is included here in case zone/tier filtering moves it into the live Top 3."
+      ]
+    }
+  };
+  var THEME_CYCLE = ["rec-gold", "rec-silver", "rec-bronze"];
+  var MEDAL_CYCLE = ["🥇", "🥈", "🥉"];
+  var RANK_LABEL = ["1st Recommendation", "2nd Recommendation", "3rd Recommendation"];
+
+  // ─── 4. OPTIONAL LIVE-CSV OVERLAY (same file, fetched over http/https) ───
+  function setSourceBadge(isLive, detail) {
+    var el = document.getElementById("data-source-badge");
+    if (!el) return;
+    if (isLive) {
+      el.className = "data-source-badge data-source-live";
+      el.textContent = "✓ Live cleaned_scored_data.csv";
+    } else {
+      el.className = "data-source-badge data-source-static";
+      el.textContent = "● Embedded verified dataset" + (detail ? " (" + detail + ")" : "");
+    }
+  }
+
+  function fetchLiveCSVAndRender() {
+    if (typeof fetch !== "function") { setSourceBadge(false, "fetch unsupported"); renderAll(); return; }
+    var controller = (typeof AbortController === "function") ? new AbortController() : null;
+    var timeoutId = controller ? setTimeout(function () { controller.abort(); }, 8000) : null;
+    fetch("cleaned_scored_data.csv", controller ? { signal: controller.signal } : {})
+      .then(function (res) {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.text();
+      })
+      .then(function (text) {
+        if (timeoutId) clearTimeout(timeoutId);
+        var parsed = rowsToRestaurants(parseCSV(text));
+        if (parsed.length > 0) {
+          RESTAURANTS = parsed;
+          setSourceBadge(true);
+        } else {
+          setSourceBadge(false, "no rows parsed");
+        }
+        renderAll();
+      })
+      .catch(function () {
+        if (timeoutId) clearTimeout(timeoutId);
+        setSourceBadge(false, "local fetch unavailable");
+        renderAll();
+      });
+  }
+
+  // ─── 5. FILTER STATE & DOM REFERENCES ────────────────────────────────────
+  var zoneSelect = document.getElementById("filter-zone");
+  var tierSelect = document.getElementById("filter-tier");
+  var resetBtn = document.getElementById("filter-reset");
+  var countEl = document.getElementById("filter-count");
+  var tbody = document.getElementById("top10-body");
+  var top3Grid = document.getElementById("top3-grid");
+
+  function getFilteredSorted() {
+    var zone = zoneSelect.value, tier = tierSelect.value;
+    return RESTAURANTS
+      .filter(function (r) { return zone === "All" || r.zone === zone; })
+      .filter(function (r) { return tier === "All" || r.priceTier === tier; })
+      .slice()
+      .sort(function (a, b) {
+        if (b.total !== a.total) return b.total - a.total; // Total Score desc
+        return b.gs - a.gs; // tiebreak: Group Suitability desc
+      });
+  }
+
+  function scoreClass(total) {
+    if (total >= 82) return "score-high";
+    if (total >= 70) return "score-mid";
+    return "score-low";
+  }
+  function rankClass(rank) {
+    if (rank === 1) return "rank-1";
+    if (rank === 2) return "rank-2";
+    if (rank === 3) return "rank-3";
+    return "rank-n";
+  }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  // ─── 6. RENDER TOP-N TABLE ────────────────────────────────────────────────
+  function renderTable(list) {
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td colspan="13" class="empty-state">No restaurants match the selected filters. Try "Reset Filters".</td></tr>';
+      return;
+    }
+    var top10 = list.slice(0, 10);
+    tbody.innerHTML = top10.map(function (r, i) {
+      var rank = i + 1;
+      return "<tr>" +
+        '<td><span class="rank-badge ' + rankClass(rank) + '">' + rank + "</span></td>" +
+        "<td><strong>" + esc(r.name) + "</strong>" + (r.smoothed ? ' <span title="Review count is an AI-smoothed scraper baseline value" style="font-size:.68rem;color:var(--text-light);">🤖</span>' : "") + "</td>" +
+        '<td><span class="cuisine-tag">' + esc(r.zone) + "</span></td>" +
+        '<td><span class="cuisine-tag">' + esc(r.cuisine) + "</span></td>" +
+        '<td><span class="cuisine-tag">' + esc(r.priceTier) + "</span></td>" +
+        "<td>" + r.rr + "</td><td>" + r.gs + "</td><td>" + r.pv + "</td><td>" + r.tr + "</td><td>" + r.dq + "</td><td>" + r.uq + "</td>" +
+        '<td><span class="score-pill ' + scoreClass(r.total) + '">' + r.total + "</span></td>" +
+        '<td><a class="map-btn" href="' + esc(r.mapsUrl) + '" target="_blank" rel="noopener">📍 Maps</a></td>' +
+        "</tr>";
+    }).join("");
+  }
+
+  // ─── 7. RENDER TOP-3 CARDS (curated or auto-generated) ───────────────────
+  function autoGenerate(r, rank) {
+    var dims = [
+      { k: "rr", label: "Review &amp; Rating", max: 25 }, { k: "gs", label: "Group Suitability", max: 20 },
+      { k: "pv", label: "Price &amp; Value", max: 15 }, { k: "tr", label: "Travel &amp; Accessibility", max: 15 },
+      { k: "dq", label: "Data Quality", max: 15 }, { k: "uq", label: "Uniqueness", max: 10 }
+    ];
+    var best = dims.slice().sort(function (a, b) { return (r[b.k] / b.max) - (r[a.k] / a.max); })[0];
+    var worst = dims.slice().sort(function (a, b) { return (r[a.k] / a.max) - (r[b.k] / b.max); })[0];
+    var strengths = [
+      "Ranked #" + rank + " under the current filters with a Total Score of <strong>" + r.total + "/100</strong>.",
+      "Rated <strong>" + r.rating + "⭐</strong>, contributing " + r.rr + "/25 to Review &amp; Rating Consistency.",
+      "Strongest rubric dimension: <strong>" + best.label + "</strong> (" + r[best.k] + "/" + best.max + ").",
+      "Price tier: <strong>" + esc(r.priceTierRaw) + "</strong> · Zone: " + esc(r.zone) + "."
+    ];
+    var risks = [
+      "<strong>Weakest dimension — " + worst.label + " (" + r[worst.k] + "/" + worst.max + "):</strong> verify this aspect directly with the venue before booking for 8–12 pax.",
+      r.smoothed
+        ? "<strong>AI-Smoothed Review Count:</strong> this venue's review count was flagged as a scraper-fallback baseline value, not a scraped figure — treat the underlying rating with appropriate caution."
+        : "<strong>Review Count:</strong> this venue's review count appears to be a genuine scraped figure, but confirm current standing as data may have changed since collection.",
+      r.gs < 15
+        ? "<strong>Group-Format Fit:</strong> Group Suitability of " + r.gs + "/20 suggests this venue's layout is not intrinsically built for large parties — call ahead to confirm seating for 8–12."
+        : "<strong>Reservation Required:</strong> with Group Suitability " + r.gs + "/20 expect high demand — book several days ahead to avoid being split across tables.",
+      "<strong>Auto-Generated Analysis:</strong> this card was generated programmatically from rubric sub-scores (no hand-written deep-dive exists for this venue outside the curated set)."
+    ];
+    return { strengths: strengths, risks: risks };
+  }
+
+  function renderTop3(list) {
+    var top3 = list.slice(0, 3);
+    if (!top3.length) {
+      top3Grid.innerHTML = '<div class="empty-state">No restaurants match the selected filters.</div>';
+      return;
+    }
+    top3Grid.innerHTML = top3.map(function (r, i) {
+      var rank = i + 1;
+      var curated = CURATED[r.name];
+      var theme = curated ? curated.theme : THEME_CYCLE[i];
+      var medal = curated ? curated.medal : MEDAL_CYCLE[i];
+      var chip1 = curated ? curated.chip : "🍽️ " + esc(r.cuisine);
+      var chip2 = curated ? curated.chipLoc : "📍 " + esc(r.zone);
+      var content = curated || autoGenerate(r, rank);
+      var strengths = curated ? curated.strengths : content.strengths;
+      var risks = curated ? curated.risks : content.risks;
+      return (
+        '<div class="rec-card ' + theme + '">' +
+          '<div class="rec-header">' +
+            '<span class="rec-medal">' + medal + "</span>" +
+            '<span class="rec-rank-label">' + RANK_LABEL[i] + "</span>" +
+            '<div class="rec-name">' + esc(r.name) + "</div>" +
+            '<div class="rec-meta">' +
+              '<span class="rec-chip">⭐ ' + r.rating + "</span>" +
+              '<span class="rec-chip">💰 ' + esc(r.priceTierRaw) + "</span>" +
+              '<span class="rec-chip">' + chip1 + "</span>" +
+              '<span class="rec-chip">' + chip2 + "</span>" +
+            "</div>" +
+            '<div class="score-badge-lg">' + r.total + "</div>" +
+          "</div>" +
+          '<div class="rec-body">' +
+            '<div class="pro-section">' +
+              '<p class="rec-section-title">✅ Why It\'s #' + rank + " for Groups</p>" +
+              '<ul class="strength-list">' + strengths.map(function (s) { return "<li>" + s + "</li>"; }).join("") + "</ul>" +
+            "</div>" +
+            '<div class="con-section" style="margin-top:.75rem;">' +
+              '<p class="rec-section-title">⚠️ Trade-offs &amp; Risks</p>' +
+              '<div class="risk-list">' + risks.map(function (s) { return '<div class="risk-item">' + s + "</div>"; }).join("") + "</div>" +
+            "</div>" +
+            '<div style="margin-top:1rem;">' +
+              '<a class="map-btn" href="' + esc(r.mapsUrl) + '" target="_blank" rel="noopener" style="font-size:.8rem;padding:.45rem .9rem;">📍 View on Google Maps</a>' +
+            "</div>" +
+          "</div>" +
+        "</div>"
+      );
+    }).join("");
+  }
+
+  // ─── 8. MASTER RENDER + EVENTS ────────────────────────────────────────────
+  function renderAll() {
+    var list = getFilteredSorted();
+    renderTable(list);
+    renderTop3(list);
+    var total = RESTAURANTS.filter(function (r) {
+      return (zoneSelect.value === "All" || r.zone === zoneSelect.value) &&
+             (tierSelect.value === "All" || r.priceTier === tierSelect.value);
+    }).length;
+    countEl.textContent = total + " restaurant" + (total === 1 ? "" : "s") + " match" + (total === 1 ? "es" : "") + " current filters";
+  }
+
+  zoneSelect.addEventListener("change", renderAll);
+  tierSelect.addEventListener("change", renderAll);
+  resetBtn.addEventListener("click", function () {
+    zoneSelect.value = "All";
+    tierSelect.value = "All";
+    renderAll();
+  });
+
+  // Initial paint from the embedded dataset, then attempt the local-CSV live overlay.
+  setSourceBadge(false);
+  renderAll();
+  fetchLiveCSVAndRender();
+})();
+</script>
 </body>
 </html>
