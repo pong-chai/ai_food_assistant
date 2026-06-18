@@ -634,7 +634,7 @@
   <div class="container">
     <span class="section-label">§ 2 — Objective</span>
     <h2>Project Objective</h2>
-    <p>This project demonstrates how to build a <strong>fully automated, end-to-end restaurant intelligence workflow</strong> capable of replacing hours of manual research with a reproducible pipeline. The goal is to surface the best dining venues in the <strong>Ari Zone</strong> for a corporate team of 8–12 people — balancing quality, budget, logistics, and group dynamics — with zero manual scraping or subjective guesswork.</p>
+    <p>This project demonstrates how to build a <strong>fully automated, end-to-end restaurant intelligence workflow</strong> capable of replacing hours of manual research with a reproducible pipeline. The goal is to surface the best dining venues across <strong>5 major Bangkok zones</strong> (Siam, Ari, Thong Lor, Asoke, Phrom Phong) for a corporate team of 8–12 people — balancing quality, budget, logistics, and group dynamics — with zero manual scraping or subjective guesswork.</p>
     <div class="objective-grid">
       <div class="obj-item">
         <span class="obj-icon">🤖</span>
@@ -683,7 +683,7 @@
       <div class="pipe-step">
         <span class="pipe-emoji">🕷️</span>
         <span class="pipe-name">Apify Scraper</span>
-        <span class="pipe-desc">Crawls Google Maps for restaurants in Ari Zone. Returns structured JSON.</span>
+        <span class="pipe-desc">Crawls Google Maps &amp; Tripadvisor for restaurants across 5 Bangkok zones. Returns structured JSON.</span>
       </div>
       <span class="pipe-arrow">→</span>
       <div class="pipe-step">
@@ -784,29 +784,29 @@
   <div class="container">
     <span class="section-label">§ 5 — Data Sources</span>
     <h2>Data Sources &amp; Reference Links</h2>
-    <p>Two complementary Google Maps data collection methods were used, yielding 30 raw entries (29 unique after deduplication).</p>
+    <p>Two complementary scrapers were used — <strong>Google Maps Scraper</strong> and <strong>Tripadvisor Scraper</strong> — together yielding 83 raw entries across Siam, Ari, Thong Lor, Asoke, and Phrom Phong (76 unique after deduplication, plus 2 flagged outliers kept with a transparent nearest-fit zone tag).</p>
 
     <div class="source-list">
       <div class="source-item">
         <span class="source-badge" style="background:#eff6ff;color:#2563eb;">Source A</span>
-        <h4>Google Maps Places API (via Apify)</h4>
-        <p style="margin-bottom:.6rem;">15 entries collected using the Places API actor. Provides Place IDs, ratings, and full addresses but <strong>no price range data</strong>. Used as the baseline dataset for the Ari Zone search.</p>
-        <p style="font-size:.75rem; color:var(--text-muted);">Fields present: Name, Place ID, Rating, Address</p>
-        <p style="font-size:.75rem; color:var(--text-muted);">Fields missing: Price Range (inferred for all 15 entries)</p>
+        <h4>Google Maps Scraper (via Apify)</h4>
+        <p style="margin-bottom:.6rem;">Crawls Google Maps listings across the 5 target zones, returning Place IDs, ratings, full addresses, and ฿-range price text where available. Used as the primary baseline dataset for most rows in the merged table.</p>
+        <p style="font-size:.75rem; color:var(--text-muted);">Fields present: Name, Place ID, Rating, Address, Price Range (where listed)</p>
+        <p style="font-size:.75rem; color:var(--text-muted);">Fields missing: Review Count, Opening Hours, Group Suitability — these don't exist in either raw source and were AI-inferred for all 76 rows</p>
         <a href="https://www.apify.com/apify/google-maps-scraper" target="_blank" rel="noopener" class="map-btn" style="margin-top:.75rem;display:inline-flex;">🔗 Apify Google Maps Actor</a>
       </div>
       <div class="source-item">
         <span class="source-badge" style="background:#f0fdf4;color:#15803d;">Source B</span>
-        <h4>Google Maps Scraper (Apify, JS-rendered)</h4>
-        <p style="margin-bottom:.6rem;">15 entries collected using the full-page scraper. Provides complete URLs, <strong>price range data</strong>, ratings, and addresses. Richer dataset used to fill price gaps via deduplication merge.</p>
-        <p style="font-size:.75rem; color:var(--text-muted);">Fields present: Name, Full URL, Rating, Price Range, Address</p>
-        <p style="font-size:.75rem; color:var(--text-muted);">Duplicate found: Madcow Burger (merged with Source A entry)</p>
-        <a href="https://www.apify.com/apify/google-maps-scraper" target="_blank" rel="noopener" class="map-btn" style="margin-top:.75rem;display:inline-flex;">🔗 Apify Scraper Docs</a>
+        <h4>Tripadvisor Scraper</h4>
+        <p style="margin-bottom:.6rem;">Crawls Tripadvisor listings across the same 5 zones, contributing its own rating, p$–p$$$$ price-tier text, and review URL per venue. Cross-referenced against Source A by fuzzy name + address matching to surface true duplicates.</p>
+        <p style="font-size:.75rem; color:var(--text-muted);">Fields present: Name, Review URL, Rating, Price Tier (p$ scale), Address</p>
+        <p style="font-size:.75rem; color:var(--text-muted);">7 duplicate pairs found across both sources (incl. Bangkok Heightz Rooftop, TAAN Bangkok, Sri Trat Restaurant) — merged into single records, rating averaged, richer price/address field retained</p>
+        <a href="https://www.tripadvisor.com" target="_blank" rel="noopener" class="map-btn" style="margin-top:.75rem;display:inline-flex;">🔗 Tripadvisor</a>
       </div>
     </div>
 
     <div class="card" style="margin-top:1rem; border-left: 4px solid var(--gold);">
-      <p style="font-size:.83rem;"><strong>⚡ Deduplication Note:</strong> <em>Madcow burger x Under Over Ari</em> appeared in both sources with identical Place ID <code>ChIJtbK7WrOd4jARTFq03G7s99k</code>. Records were merged, retaining the Scraper entry's richer price data. Final unique count: <strong>29 restaurants</strong>.</p>
+      <p style="font-size:.83rem;"><strong>⚡ Deduplication Note:</strong> 83 raw rows → <strong>76 unique restaurants</strong>. 7 true duplicate pairs were found across the two scrapers via fuzzy name + address matching — including <em>Bangkok Heightz Rooftop</em>, <em>TAAN / TAAN Bangkok</em>, and <em>Sri Trat Restaurant</em> — each merged into one record with an averaged rating and the richer of the two price/address fields retained.</p>
     </div>
   </div>
 </section>
@@ -995,7 +995,7 @@
         <p style="font-size:.83rem; font-weight:700; color:var(--text); margin-bottom:.35rem;">System Architecture &amp; Hybrid Workflow</p>
         <p style="font-size:.82rem;">The project successfully implemented a hybrid architecture by separating data collection (Apify), orchestration (n8n), storage (Google Sheets), and intelligence/scoring (Claude Cowork). This modular approach made the system stable, saved API credits, and allowed each stage to be tested independently.</p>
         <p style="font-size:.83rem; font-weight:700; color:var(--text); margin-bottom:.35rem; margin-top:.75rem;">Effective Data Collection &amp; Automation</p>
-        <p style="font-size:.82rem;">The automated pipeline functioned successfully end-to-end. Apify reliably scraped 29–30 restaurant records focused on the Ari Zone with consistent data schemas, while operating within the free credit limits.</p>
+        <p style="font-size:.82rem;">The automated pipeline functioned successfully end-to-end. Two scrapers (Google Maps Scraper + Tripadvisor Scraper) reliably collected 83 raw restaurant records across 5 Bangkok zones with consistent data schemas, while operating within the free credit limits.</p>
         <p style="font-size:.83rem; font-weight:700; color:var(--text); margin-bottom:.35rem; margin-top:.75rem;">AI Analysis &amp; HTML Output Completeness</p>
         <p style="font-size:.82rem;">Claude accurately executed the 6-dimension scoring rubric, producing non-trivial rankings and actionable trade-offs rather than surface-level praise. The final HTML output was complete and incorporated all 9 mandatory sections.</p>
       </div>
@@ -1229,27 +1229,38 @@
   var RESTAURANTS = rowsToRestaurants(parseCSV(CSV_TEXT));
 
   // ─── 3. CURATED DEEP-DIVE CONTENT ─────────────────────────────────────────
-  // Curated for the 4 highest-scoring venues in the verified dataset so that
-  // whichever 3 actually land in the live Top-3 slot — determined purely by
-  // Total Score, descending, exactly per spec — get hand-written analysis
-  // instead of an auto-generated card. (Total Scores: Bangkok Heightz 90.1,
-  // Paradise Lost Bangkok 89.0, Cappadocia Turkish 88.7, Market Cafe 88.0 —
-  // Paradise Lost Bangkok actually outranks Cappadocia and Market Cafe, so a
-  // curated card is provided for it too rather than silently dropping it.)
+  // Per AI_Food_Assistant_Clean_Data_Scoring.md §3, the *default* Top-3 panel
+  // (no Zone/Tier filters applied) is a deliberate curated shortlist — Bangkok
+  // Heightz Rooftop, Cappadocia Turkish Restaurant, and Market Cafe — not a
+  // strict score-descending slice. The source doc is explicit that Paradise
+  // Lost Bangkok - Rooftop Bar actually outranks two of these three on raw
+  // Total Score (89.0 vs. 88.7 / 88.0, rank #2 overall) but is intentionally
+  // left out of the default shortlist because all three curated picks sit in
+  // Asoke — the doc itself calls this "zero zone diversity" and suggests
+  // swapping in Paradise Lost Bangkok (Siam) if geographic spread matters
+  // more than raw score. We keep a curated card for it too so that dynamic
+  // Zone/Tier filtering (which bypasses the fixed default list below and
+  // falls back to true descending-score order) still renders hand-written
+  // analysis for it instead of an auto-generated card.
+  var DEFAULT_TOP3_NAMES = [
+    "Bangkok Heightz Rooftop (Restaurant & Bar 39th floor)",
+    "Cappadocia Turkish Restaurant Bangkok",
+    "Market Cafe"
+  ];
   var CURATED = {
     "Bangkok Heightz Rooftop (Restaurant & Bar 39th floor)": {
       medal: "🥇", theme: "rec-gold", chip: "🍹 Rooftop Bar / Bar &amp; Grill", chipLoc: "📍 Asoke (BTS Asok)",
       strengths: [
-        "Highest Total Score in the entire dataset — <strong>90.1/100</strong>, driven by a perfect Group Suitability score (<strong>20/20</strong>) and the dataset's top Data Quality score (<strong>15/15</strong>).",
-        "One of only two rows whose review count (3,919) is <em>not</em> flagged as an AI-smoothed scraper fallback value — the underlying review signal here is comparatively more trustworthy.",
-        "BTS Asok / MRT Sukhumvit walkable (3–10 min), among the best-connected venues in the dataset.",
-        "39th-floor rooftop format naturally suits a large team booking — open floor plan, panoramic views as a built-in conversation piece."
+        "Highest total score in the dataset — <strong>90.1/100</strong> — and the only Top-3 pick cross-validated across both sources: Google Maps 4.8★ and Tripadvisor 4.8★ independently agree.",
+        "39th-floor rooftop with skyline views — a strong \"memorable team night\" choice, and the floor plan is built for groups.",
+        "3–10 minutes from BTS Asok / MRT Sukhumvit, among the best-connected venues in the dataset.",
+        "Perfect Group Suitability score (<strong>20/20</strong>) and the dataset's top Data Quality score (<strong>15/15</strong>)."
       ],
       risks: [
-        "<strong>Premium Price Tier (Above ฿800/person):</strong> the most expensive tier in the normalized scale — for 8–12 people this is a meaningfully larger budget commitment than the Mid-Range venues immediately below it in the ranking.",
-        "<strong>Weather &amp; Rooftop Exposure:</strong> open-air 39th-floor format is exposed to Bangkok's sudden rainy-season downpours; have an indoor backup or check the forecast before locking the date.",
-        "<strong>Merged-Duplicate Record:</strong> this row combines a Google Maps and Tripadvisor listing — double-check current hours/booking policy directly, since merged records can drift from a single live source over time.",
-        "<strong>Uniqueness only 8/10:</strong> despite the top overall score, the rooftop-bar format itself isn't the most differentiated concept in the dataset — book it for the score and logistics, not novelty."
+        "<strong>Weather risk is real.</strong> It's an open-air rooftop; Bangkok's rainy season (roughly June–October) means a real chance of being rained out or moved to a smaller indoor backup area with no view.",
+        "<strong>Cost concentration in drinks, not food.</strong> Rooftop bars in this price bracket (~฿1,000+/person) typically make their margin on alcohol; if your team isn't drinking much, you may pay a premium for a thinner food menu than a dedicated restaurant.",
+        "<strong>Group minimum spend / table charge is likely</strong> for a party of 8–12 on a rooftop bar, and that detail isn't in the source data — confirm directly before committing a headcount.",
+        "<strong>Review count and hours are AI-estimated</strong>, not pulled from a live source — the raw dataset has no review-count or hours field at all."
       ]
     },
     "Paradise Lost Bangkok - Rooftop Bar": {
@@ -1270,31 +1281,31 @@
     "Cappadocia Turkish Restaurant Bangkok": {
       medal: "🥉", theme: "rec-bronze", chip: "🥙 Turkish", chipLoc: "📍 Asoke (BTS Asok)",
       strengths: [
-        "The <strong>only Turkish-cuisine venue</strong> in the entire 76-restaurant dataset — strong built-in differentiation among a field dominated by Thai, Japanese, and Italian options.",
-        "Mid-Range pricing (฿300–฿800/person) keeps per-head cost predictable for a 8–12 person booking.",
-        "Perfect Group Suitability (20/20) and strong Travel &amp; Accessibility (15/15) — Sukhumvit Soi 11, BTS Asok / MRT Sukhumvit walkable in 3–10 minutes.",
-        "4.9★ rating ties for the highest in the Top 5, contributing 21.5/25 to Review &amp; Rating Consistency."
+        "Best Price &amp; Value score of the Top 3 (mid-range ฿400–1,000) while still holding a 4.9★ rating.",
+        "Turkish cuisine is built around shared mezze and platters, which maps naturally onto how a 10-person team actually eats together — better than ordering 10 separate plated mains.",
+        "Indoor seating removes the rooftop weather risk entirely.",
+        "Same Asoke cluster as pick #1 if you want to combine dinner + rooftop drinks in one outing."
       ],
       risks: [
-        "<strong>AI-Smoothed Review Count:</strong> the 900 review count is a flagged scraper-fallback baseline value (<code>[AI-Smoothed Data: Review count localized baseline]</code>) — actual review volume is unverified.",
-        "<strong>Uniqueness only 7/10</strong> despite the cuisine novelty — the differentiation didn't fully translate into other standout factors (no signature dish or view called out in the source data).",
-        "<strong>Meat-Forward Menu:</strong> confirm halal/dietary-specific options directly given Turkish cuisine's typically meat-centric profile, especially for a mixed-dietary group of 8–12.",
-        "<strong>Data Quality 14/15</strong> — single-source record (Google Maps only), not cross-verified against a second source the way some other Asoke venues are."
+        "<strong>Lowest Uniqueness score (7/10) of the Top 3</strong> — solid food, but less of a standout \"event\" venue than a rooftop with a view; less photogenic for a team-bonding recap.",
+        "<strong>Single-source record</strong> (Google Maps only, not cross-checked against Tripadvisor) — slightly less confidence in the rating/price than a merged record.",
+        "<strong>Zone overlap with pick #1.</strong> Both are in Asoke — if the team wanted to experience two different parts of the city across two outings, this pairing doesn't deliver that.",
+        "<strong>Review count is AI-estimated</strong>, like every other row in this dataset."
       ]
     },
     "Market Cafe": {
       medal: "🏅", theme: "rec-bronze", chip: "🍴 International Buffet", chipLoc: "📍 Asoke (BTS Asok)",
       strengths: [
-        "Buffet format is inherently group-friendly — flexible portions and self-serve variety reduce the \"everyone orders something different\" friction common with 8–12 person bookings.",
-        "Mid-Range pricing (฿300–฿800/person) and a perfect Group Suitability score (20/20).",
-        "Same Sukhumvit Soi 13 / Hyatt Regency walkability cluster as Bangkok Heightz and Cappadocia — easy to combine into one itinerary.",
-        "4.9★ rating, tied for the highest in the Top 5; Review &amp; Rating Consistency scored 22.8/25, the best of the curated set."
+        "An international buffet format is the safest choice for a team of 8–12 with mixed dietary preferences (vegetarian, halal, allergies, picky eaters) — nobody has to negotiate a shared menu.",
+        "Hotel-grade buffet (Hyatt Regency), 4.9★ rating, large floor plan built for groups.",
+        "Same easy Asoke BTS/MRT access as picks #1 and #2.",
+        "Review &amp; Rating Consistency scored 22.8/25, the best of the curated Top 3."
       ],
       risks: [
-        "<strong>Lowest Uniqueness score among the Top 5 (5/10):</strong> a generic international-buffet format with no called-out signature dish or experiential differentiator in the source data.",
-        "<strong>AI-Smoothed Review Count:</strong> the 2,800 review count is a flagged scraper-fallback baseline value (<code>[AI-Smoothed Data: Review count localized baseline]</code>) — actual review volume is unverified.",
-        "<strong>Buffet Freshness Risk:</strong> quality/freshness for a large simultaneous group booking should be confirmed directly with the hotel — no per-dish review detail exists beyond the aggregate rating.",
-        "<strong>Lands at rank #4</strong> under a strict descending Total-Score sort (88.0, just behind Cappadocia's 88.7) — a curated card is included here in case zone/tier filtering moves it into the live Top 3."
+        "<strong>Lowest Uniqueness score of the Top 3 (5/10).</strong> A hotel buffet is functional and crowd-pleasing but the least \"special occasion\" feeling of the three — fine for a routine team dinner, weak if the goal is to impress or celebrate a milestone.",
+        "<strong>All three Top-3 picks are in Asoke.</strong> This is the single biggest honest caveat across the whole Top 3: there is zero zone diversity in this shortlist. If geographic variety across Siam/Ari/Thong Lor/Phrom Phong matters for your decision, consider swapping in <strong>Paradise Lost Bangkok – Rooftop Bar (Siam, score 89.0, rank #2 overall)</strong> for one of these three.",
+        "<strong>Price field is a coarse tier</strong> (\"p$$-$$$\"), not a precise number — buffet pricing for a group of 10–12 should be confirmed directly, as hotel buffets often have a fixed per-head rate that may exceed the implied tier for dinner/weekend seatings.",
+        "<strong>Review count is AI-estimated</strong>, like every other row in this dataset."
       ]
     }
   };
@@ -1428,7 +1439,19 @@
   }
 
   function renderTop3(list) {
-    var top3 = list.slice(0, 3);
+    var noFiltersActive = (zoneSelect.value === "All" && tierSelect.value === "All");
+    var top3;
+    if (noFiltersActive) {
+      // Default view: use the curated shortlist from the source doc (§3),
+      // not a strict score-descending slice — see DEFAULT_TOP3_NAMES comment.
+      top3 = DEFAULT_TOP3_NAMES
+        .map(function (name) { return RESTAURANTS.filter(function (r) { return r.name === name; })[0]; })
+        .filter(function (r) { return !!r; });
+      if (top3.length < 3) top3 = list.slice(0, 3); // safety fallback if names ever drift from data
+    } else {
+      // Any Zone/Tier filter active: fall back to true descending-score order.
+      top3 = list.slice(0, 3);
+    }
     if (!top3.length) {
       top3Grid.innerHTML = '<div class="empty-state">No restaurants match the selected filters.</div>';
       return;
