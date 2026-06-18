@@ -1516,4 +1516,17 @@
 
   zoneSelect.addEventListener("change", renderAll);
   tierSelect.addEventListener("change", renderAll);
-  resetBtn.addEventLi
+  resetBtn.addEventListener("click", function () {
+    zoneSelect.value = "All";
+    tierSelect.value = "All";
+    renderAll();
+  });
+
+  // Initial paint from the embedded dataset, then attempt the local-CSV live overlay.
+  setSourceBadge(false);
+  renderAll();
+  fetchLiveCSVAndRender();
+})();
+</script>
+</body>
+</html>
